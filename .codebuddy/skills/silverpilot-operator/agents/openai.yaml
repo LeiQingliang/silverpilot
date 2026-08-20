@@ -1,0 +1,13 @@
+interface:
+  display_name: "SilverPilot Agent 运营与升级"
+  short_description: "校验知识库、验证 Agent、生成运营分析并安全扩展养老业务"
+  default_prompt: "Use $silverpilot-operator to audit the knowledge base, verify the Agent, and propose one evidence-backed product improvement."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "silverpilot-cecsms"
+      description: "Read-only SilverPilot catalog, knowledge, and Agent operations metrics"
+      transport: "streamable_http"
+      url: "http://127.0.0.1:8083/mcp"
+policy:
+  allow_implicit_invocation: true

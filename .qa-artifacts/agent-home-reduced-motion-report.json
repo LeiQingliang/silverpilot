@@ -1,0 +1,243 @@
+{
+  "generatedAt": "2026-08-20T14:49:54.714Z",
+  "durationMs": 9483,
+  "browser": "msedge.exe",
+  "screenshotDirectory": "D:\\program\\java\\silverpilot\\.qa-artifacts\\agent-home-reduced-motion\\silverpilot-display-audit-HBcu02",
+  "cases": 2,
+  "passed": 2,
+  "failed": 0,
+  "reducedMotion": true,
+  "performanceAudits": [
+    {
+      "route": "/front/home/FrontHomeView",
+      "viewport": "desktop",
+      "theme": "light",
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 3,
+          "runningAnimations": 0,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": true,
+              "animationActive": "false",
+              "width": 1425,
+              "height": 1000
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.07,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 1149,
+          "animations": 3,
+          "runningAnimations": 0,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 1425,
+              "height": 1000
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.05,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 2092,
+          "animations": 3,
+          "runningAnimations": 0,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 1425,
+              "height": 1000
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.08,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 1149,
+          "animations": 3,
+          "runningAnimations": 0,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 1425,
+              "height": 1000
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.05,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        }
+      ]
+    },
+    {
+      "route": "/front/home/FrontHomeView",
+      "viewport": "mobile",
+      "theme": "light",
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 3,
+          "runningAnimations": 0,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": true,
+              "animationActive": "false",
+              "width": 390,
+              "height": 844
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.05,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 1425,
+          "animations": 3,
+          "runningAnimations": 0,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 390,
+              "height": 844
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.04,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 3075,
+          "animations": 3,
+          "runningAnimations": 0,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 390,
+              "height": 844
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.13,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 1425,
+          "animations": 3,
+          "runningAnimations": 0,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 390,
+              "height": 844
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.03,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        }
+      ]
+    }
+  ],
+  "failures": []
+}

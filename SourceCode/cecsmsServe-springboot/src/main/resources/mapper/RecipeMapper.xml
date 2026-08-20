@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cecsmsserve.mapper.RecipeMapper">
+
+    <resultMap id="BaseResultMap" type="com.cecsmsserve.entity.Recipe">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="description" property="description" />
+        <result column="image_url" property="imageUrl" />
+        <result column="nutrition_info" property="nutritionInfo" />
+        <result column="suitable_crowd" property="suitableCrowd" />
+        <result column="cooking_steps" property="cookingSteps" />
+        <result column="tips" property="tips" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="status" property="status" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, description, image_url, nutrition_info, suitable_crowd,
+        cooking_steps, tips, create_time, update_time, create_user_id, status
+    </sql>
+
+    <select id="selectRecipePage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM recipe
+        WHERE status = 1
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <update id="logicalDelete">
+        UPDATE recipe SET status = 0 WHERE id = #{id}
+    </update>
+
+</mapper>

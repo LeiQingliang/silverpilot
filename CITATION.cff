@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use SilverPilot in academic or engineering work, please cite this repository."
+title: "SilverPilot: AI-Driven Intelligent Elderly Care System"
+type: software
+version: "1.0.1"
+date-released: "2026-08-20"
+authors:
+  - family-names: Lei
+    given-names: Qingliang
+    alias: LeiQingliang
+repository-code: "https://github.com/LeiQingliang/silverpilot"
+url: "https://github.com/LeiQingliang/silverpilot"
+license: Apache-2.0
+abstract: >-
+  A verifiable tool-using eldercare service operations Agent built with
+  Spring Boot, Vue, MySQL and Redis, with human confirmation and audit trails.
+keywords:
+  - artificial intelligence
+  - agent
+  - eldercare
+  - spring boot
+  - vue

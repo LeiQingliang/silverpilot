@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cecsmsserve.mapper.CommentMapper">
+
+    <sql id="PublicCommentColumns">
+        c.id,
+        c.content,
+        c.user_id AS userId,
+        COALESCE(u.name, c.user_name) AS userName,
+        c.parent_id AS parentId,
+        c.reply_to AS replyTo,
+        COALESCE(reply_user.name, c.reply_to_name) AS replyToUserName,
+        c.create_time AS createTime,
+        c.update_time AS updateTime,
+        c.is_deleted AS isDeleted,
+        (SELECT COUNT(*) FROM comment child
+         WHERE child.parent_id = c.id AND child.is_deleted = 0) AS replyCount
+    </sql>
+
+    <sql id="ManagementCommentColumns">
+        c.id,
+        c.content,
+        c.user_id AS userId,
+        COALESCE(u.name, c.user_name) AS userName,
+        COALESCE(u.telephone, c.user_telephone) AS userTelephone,
+        c.parent_id AS parentId,
+        c.reply_to AS replyTo,
+        COALESCE(reply_user.name, c.reply_to_name) AS replyToUserName,
+        c.create_time AS createTime,
+        c.update_time AS updateTime,
+        c.is_deleted AS isDeleted,
+        (SELECT COUNT(*) FROM comment child
+         WHERE child.parent_id = c.id AND child.is_deleted = 0) AS replyCount
+    </sql>
+
+    <select id="selectCommentListWithUser" resultType="com.cecsmsserve.entity.vo.CommentVo">
+        SELECT <include refid="PublicCommentColumns"/>
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN user reply_user ON reply_user.id = c.reply_to
+        WHERE c.is_deleted = 0 AND c.parent_id IS NULL
+        ORDER BY c.create_time DESC
+    </select>
+
+    <select id="selectRepliesByParentId" resultType="com.cecsmsserve.entity.vo.CommentVo">
+        SELECT <include refid="PublicCommentColumns"/>
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN user reply_user ON reply_user.id = c.reply_to
+        WHERE c.is_deleted = 0 AND c.parent_id = #{parentId}
+        ORDER BY c.create_time ASC
+    </select>
+
+    <select id="selectManagementListWithUser" resultType="com.cecsmsserve.entity.vo.CommentVo">
+        SELECT <include refid="ManagementCommentColumns"/>
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN user reply_user ON reply_user.id = c.reply_to
+        ORDER BY c.create_time DESC
+    </select>
+
+    <select id="selectDetailIncludingDeleted" resultType="com.cecsmsserve.entity.vo.CommentVo">
+        SELECT <include refid="ManagementCommentColumns"/>
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN user reply_user ON reply_user.id = c.reply_to
+        WHERE c.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectRepliesIncludingDeleted" resultType="com.cecsmsserve.entity.vo.CommentVo">
+        SELECT <include refid="ManagementCommentColumns"/>
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN user reply_user ON reply_user.id = c.reply_to
+        WHERE c.parent_id = #{parentId}
+        ORDER BY c.create_time ASC
+    </select>
+
+    <select id="selectIncludingDeleted" resultType="com.cecsmsserve.entity.Comment">
+        SELECT
+            id,
+            content,
+            user_id AS userId,
+            user_name AS userName,
+            user_telephone AS userTelephone,
+            parent_id AS parentId,
+            reply_to AS replyTo,
+            reply_to_name AS replyToUserName,
+            create_time AS createTime,
+            update_time AS updateTime,
+            is_deleted AS isDeleted
+        FROM comment
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <update id="restoreById">
+        UPDATE comment
+        SET is_deleted = 0, update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id} AND is_deleted = 1
+    </update>
+
+    <select id="selectByUserId" resultType="com.cecsmsserve.entity.Comment">
+        SELECT
+            c.id,
+            c.content,
+            c.user_id AS userId,
+            c.user_name AS userName,
+            c.user_telephone AS userTelephone,
+            c.parent_id AS parentId,
+            c.reply_to AS replyTo,
+            c.reply_to_name AS replyToUserName,
+            c.create_time AS createTime,
+            c.update_time AS updateTime,
+            c.is_deleted AS isDeleted
+        FROM comment c
+        WHERE c.is_deleted = 0 AND c.user_id = #{userId}
+        ORDER BY c.create_time DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-08-20T13:35:40.003243+00:00",
+  "site_root": "D:\\program\\java\\silverpilot\\SourceCode\\cecsmsui-vue\\src\\components\\front\\home",
+  "reference_roots": [
+    "C:\\Users\\rog\\AppData\\Local\\Temp\\silverpilot-sylva-audit-20260820-1335"
+  ],
+  "summary": {
+    "site_files": 5,
+    "reference_files": 12,
+    "site_categories": {
+      "asset": 5
+    },
+    "reference_categories": {
+      "asset": 2,
+      "image": 3,
+      "text": 7
+    }
+  },
+  "exact_file_matches": [],
+  "historical_exact_matches": [],
+  "basename_matches": [],
+  "text_overlap_leads": [],
+  "number_overlap_leads": [],
+  "notes": [
+    "Leads are not automatic plagiarism findings.",
+    "Review rendered context, licenses, visual composition, and video motion manually.",
+    "Generic numbers and common functional phrases may be false positives."
+  ]
+}

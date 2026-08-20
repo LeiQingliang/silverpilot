@@ -1,0 +1,11 @@
+target
+logs
+.idea
+.run
+.env
+.env.*
+config
+src/main/resources/application-local.properties
+src/main/resources/application-host.properties
+*.log
+README.md

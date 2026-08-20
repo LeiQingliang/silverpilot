@@ -1,0 +1,972 @@
+{
+  "generated_at": "2026-08-20T14:51:21.553041+00:00",
+  "site_root": "D:\\program\\java\\silverpilot\\SourceCode\\cecsmsui-vue\\src",
+  "reference_roots": [
+    "C:\\Users\\rog\\AppData\\Local\\Temp\\silverpilot-sylva-audit-20260820-1335"
+  ],
+  "summary": {
+    "site_files": 120,
+    "reference_files": 12,
+    "site_categories": {
+      "asset": 88,
+      "image": 10,
+      "text": 22
+    },
+    "reference_categories": {
+      "asset": 2,
+      "image": 3,
+      "text": 7
+    }
+  },
+  "exact_file_matches": [],
+  "historical_exact_matches": [],
+  "basename_matches": [],
+  "text_overlap_leads": [],
+  "number_overlap_leads": [
+    {
+      "site_path": "src/assets\\base.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "1",
+        "100%"
+      ]
+    },
+    {
+      "site_path": "src/assets\\base.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1"
+      ]
+    },
+    {
+      "site_path": "src/assets\\base.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "1",
+        "100%"
+      ]
+    },
+    {
+      "site_path": "src/assets\\base.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "1",
+        "100%"
+      ]
+    },
+    {
+      "site_path": "src/assets\\base.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "site_path": "src/assets\\logo.svg",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "2000"
+      ]
+    },
+    {
+      "site_path": "src/assets\\logo.svg",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0"
+      ]
+    },
+    {
+      "site_path": "src/assets\\logo.svg",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0"
+      ]
+    },
+    {
+      "site_path": "src/assets\\logo.svg",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0"
+      ]
+    },
+    {
+      "site_path": "src/assets\\main.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "0%",
+        "0,",
+        "1",
+        "1,",
+        "1.03",
+        "1.12",
+        "1.2",
+        "1.4",
+        "1.5",
+        "1.65",
+        "10",
+        "10%",
+        "100%",
+        "12%",
+        "2",
+        "25%",
+        "255",
+        "280ms",
+        "3",
+        "4",
+        "42%",
+        "45%",
+        "5",
+        "50%",
+        "55%",
+        "6",
+        "600",
+        "7",
+        "70%",
+        "72%",
+        "76%",
+        "8",
+        "8%",
+        "82%",
+        "9",
+        "90%",
+        "92%"
+      ]
+    },
+    {
+      "site_path": "src/assets\\main.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ]
+    },
+    {
+      "site_path": "src/assets\\main.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "1.5",
+        "10",
+        "100%",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ]
+    },
+    {
+      "site_path": "src/assets\\main.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "1.5",
+        "10",
+        "100%",
+        "2",
+        "3",
+        "34%",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "88",
+        "9"
+      ]
+    },
+    {
+      "site_path": "src/assets\\main.css",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "1.5",
+        "10",
+        "102",
+        "2",
+        "204",
+        "255",
+        "3",
+        "4",
+        "41",
+        "5",
+        "6",
+        "7",
+        "8",
+        "86",
+        "88",
+        "9"
+      ]
+    },
+    {
+      "site_path": "src/main.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "400",
+        "500",
+        "600"
+      ]
+    },
+    {
+      "site_path": "src/main.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "500"
+      ]
+    },
+    {
+      "site_path": "src/main.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "500"
+      ]
+    },
+    {
+      "site_path": "src/main.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "400"
+      ]
+    },
+    {
+      "site_path": "src/router\\index.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "site_path": "src/router\\index.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "site_path": "src/router\\index.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "site_path": "src/router\\index.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "site_path": "src/router\\index.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "2",
+        "200",
+        "3,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1",
+        "2"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "2",
+        "3,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "2",
+        "3,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "2",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activitytype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activitytype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activitytype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0"
+      ]
+    },
+    {
+      "site_path": "src/stores\\activitytype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\menu.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "1",
+        "1,",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\menu.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1"
+      ]
+    },
+    {
+      "site_path": "src/stores\\menu.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "1",
+        "1,",
+        "1.",
+        "2.",
+        "3.",
+        "4.",
+        "5."
+      ]
+    },
+    {
+      "site_path": "src/stores\\menu.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "1",
+        "1,",
+        "1.",
+        "2.",
+        "3.",
+        "4.",
+        "5."
+      ]
+    },
+    {
+      "site_path": "src/stores\\menu.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "1",
+        "1,",
+        "1.",
+        "2.",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\myactivity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "1,",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\myactivity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "1,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\myactivity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "1,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\myactivity.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "1,",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\report.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "1",
+        "10",
+        "100",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\report.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1"
+      ]
+    },
+    {
+      "site_path": "src/stores\\report.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "1",
+        "10",
+        "100"
+      ]
+    },
+    {
+      "site_path": "src/stores\\report.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "1",
+        "10",
+        "100"
+      ]
+    },
+    {
+      "site_path": "src/stores\\report.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "1",
+        "10",
+        "100",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\serviceorder.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "10",
+        "2",
+        "200",
+        "3",
+        "8,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\serviceorder.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    {
+      "site_path": "src/stores\\serviceorder.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "10",
+        "2",
+        "3"
+      ]
+    },
+    {
+      "site_path": "src/stores\\serviceorder.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "10",
+        "2",
+        "3"
+      ]
+    },
+    {
+      "site_path": "src/stores\\serviceorder.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "10",
+        "2",
+        "200",
+        "3"
+      ]
+    },
+    {
+      "site_path": "src/stores\\servicetype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "1",
+        "1,",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\servicetype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1"
+      ]
+    },
+    {
+      "site_path": "src/stores\\servicetype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "1",
+        "1,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\servicetype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "1",
+        "1,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\servicetype.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "1",
+        "1,",
+        "200"
+      ]
+    },
+    {
+      "site_path": "src/stores\\user.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "0,",
+        "1,",
+        "104",
+        "2",
+        "200",
+        "3",
+        "4",
+        "5,"
+      ]
+    },
+    {
+      "site_path": "src/stores\\user.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "site_path": "src/stores\\user.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "0,",
+        "1,",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "site_path": "src/stores\\user.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "0,",
+        "1,",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "site_path": "src/stores\\user.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "0,",
+        "1,",
+        "103",
+        "104",
+        "2",
+        "200",
+        "3",
+        "4",
+        "5,"
+      ]
+    },
+    {
+      "site_path": "src/utils\\agent.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "1000",
+        "120",
+        "16",
+        "2",
+        "240",
+        "3",
+        "30",
+        "300",
+        "4000",
+        "7",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\agent.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    {
+      "site_path": "src/utils\\agent.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "1000",
+        "16",
+        "2",
+        "3",
+        "30",
+        "300",
+        "7",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\agent.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "1000",
+        "16",
+        "2",
+        "3",
+        "30",
+        "300",
+        "7",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\agent.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "1,",
+        "16",
+        "2",
+        "3",
+        "30",
+        "300",
+        "7",
+        "8",
+        "80"
+      ]
+    },
+    {
+      "site_path": "src/utils\\axios.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\axios.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\axios.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\axios.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\download.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "180",
+        "2",
+        "200",
+        "300",
+        "32",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\download.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "1",
+        "2"
+      ]
+    },
+    {
+      "site_path": "src/utils\\download.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "2",
+        "300",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\download.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "2",
+        "300",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\download.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "0,",
+        "1",
+        "180",
+        "2",
+        "200",
+        "300",
+        "32",
+        "8"
+      ]
+    },
+    {
+      "site_path": "src/utils\\http-error.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "500"
+      ]
+    },
+    {
+      "site_path": "src/utils\\http-error.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "500"
+      ]
+    },
+    {
+      "site_path": "src/utils\\http-error.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "500"
+      ]
+    },
+    {
+      "site_path": "src/utils\\http-error.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0"
+      ]
+    },
+    {
+      "site_path": "src/utils\\upload.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/index.html",
+      "values": [
+        "0",
+        "0,",
+        "0.82",
+        "1,",
+        "1600",
+        "2",
+        "600"
+      ]
+    },
+    {
+      "site_path": "src/utils\\upload.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/licenses\\LEXEND-OFL.txt",
+      "values": [
+        "2"
+      ]
+    },
+    {
+      "site_path": "src/utils\\upload.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-explore.html",
+      "values": [
+        "0",
+        "0,",
+        "1,",
+        "2"
+      ]
+    },
+    {
+      "site_path": "src/utils\\upload.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\liquid-metal-play.html",
+      "values": [
+        "0",
+        "0,",
+        "1,",
+        "2"
+      ]
+    },
+    {
+      "site_path": "src/utils\\upload.js",
+      "reference_path": "silverpilot-sylva-audit-20260820-1335/sylva-assets\\three.min.js",
+      "values": [
+        "0",
+        "0,",
+        "1,",
+        "1024",
+        "2"
+      ]
+    }
+  ],
+  "notes": [
+    "Leads are not automatic plagiarism findings.",
+    "Review rendered context, licenses, visual composition, and video motion manually.",
+    "Generic numbers and common functional phrases may be false positives."
+  ]
+}

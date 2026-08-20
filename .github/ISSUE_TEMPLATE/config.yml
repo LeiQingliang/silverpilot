@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and support
+    url: https://github.com/LeiQingliang/silverpilot/discussions
+    about: Ask usage, architecture, and deployment questions in Discussions.
+  - name: Private security report
+    url: https://github.com/LeiQingliang/silverpilot/security/advisories/new
+    about: Report vulnerabilities privately; do not open a public issue.

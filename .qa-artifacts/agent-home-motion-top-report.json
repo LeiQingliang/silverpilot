@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-08-20T14:47:17.205Z",
+  "durationMs": 6363,
+  "browser": "msedge.exe",
+  "screenshotDirectory": "D:\\program\\java\\silverpilot\\.qa-artifacts\\agent-home-motion-top\\silverpilot-display-audit-nuNEnT",
+  "cases": 2,
+  "passed": 2,
+  "failed": 0,
+  "reducedMotion": false,
+  "performanceAudits": [],
+  "failures": []
+}

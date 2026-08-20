@@ -1,0 +1,18 @@
+{
+  "name": "silverpilot_cecsms",
+  "displayName": "SilverPilot 养老 Agent 只读连接器",
+  "description": "本地联调模板：查询养老服务目录、受控知识和匿名 Agent 运营指标；云端发布前需替换为受保护的 HTTPS 地址",
+  "transport": "streamable_http",
+  "serverUrl": "http://127.0.0.1:8083/mcp",
+  "deploymentScope": "local_only_replace_with_https_for_managed_workbuddy",
+  "authentication": {
+    "type": "api_key",
+    "header": "X-CECSMS-MCP-Key",
+    "secretEnvironmentVariable": "CECSMS_MCP_API_KEY"
+  },
+  "security": {
+    "readOnly": true,
+    "personalHealthDataExposed": false,
+    "businessWritesExposed": false
+  }
+}

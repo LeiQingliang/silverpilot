@@ -1,0 +1,151 @@
+{
+  "generatedAt": "2026-08-20T14:24:09.440Z",
+  "durationMs": 5781,
+  "browser": "msedge.exe",
+  "screenshotDirectory": "D:\\program\\java\\silverpilot\\.qa-artifacts\\forest-home\\silverpilot-display-audit-fHO1y9",
+  "cases": 2,
+  "passed": 0,
+  "failed": 2,
+  "reducedMotion": false,
+  "performanceAudits": [],
+  "failures": [
+    {
+      "route": "/front/home/FrontHomeView",
+      "role": "user",
+      "theme": "light",
+      "viewport": "desktop",
+      "passed": false,
+      "failures": [
+        "route error boundary is visible",
+        "7 console error(s)",
+        "4 HTTP 5xx response(s)"
+      ],
+      "metrics": {
+        "actualPath": "/front/home/FrontHomeView",
+        "actualRoute": "/front/home/FrontHomeView",
+        "title": "智慧养老首页 · SilverPilot",
+        "theme": "light",
+        "readyState": "complete",
+        "textLength": 133,
+        "visibleElementCount": 39,
+        "appHeight": 1000,
+        "appDisplay": "block",
+        "appVisibility": "visible",
+        "appOpacity": "1",
+        "bodyBackground": "rgb(245, 245, 247)",
+        "documentWidth": 1440,
+        "viewportWidth": 1440,
+        "horizontalOverflow": false,
+        "overflowCandidates": [],
+        "interactiveOverlaps": [],
+        "brokenImages": [],
+        "brokenMedia": [],
+        "routeError": true,
+        "errorMessages": [
+          "服务器暂时不可用",
+          "首页数据暂时无法加载，请稍后重试"
+        ],
+        "stuckLoadingMasks": 0
+      },
+      "animationSamples": [],
+      "runtimeErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "Error loading father categories: AxiosError: Request failed with status code 502 at settle (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:1934:14) at XMLHttpRequest.onloadend (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:2367:4)",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "页面渲染失败 AxiosError: Request failed with status code 502 at settle (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:1934:14) at XMLHttpRequest.onloadend (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:2367:4)",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "An error occurred: AxiosError: Request failed with status code 502 at settle (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:1934:14) at XMLHttpRequest.onloadend (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:2367:4) at Axios$1.request (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:3188:37) at async Proxy.selectFather (http://127.0.0.1:8081/src/stores/servicetype.js:31:39) at async fetchAllServices (http://127.0.0.1:8081/src/components/front/home/FrontHomeView.vue:58:5) at async Promise.all (index 1)"
+      ],
+      "consoleWarnings": [],
+      "badResponses": [
+        {
+          "status": 502,
+          "url": "http://127.0.0.1:8081/api/serviceType/selectFather1"
+        },
+        {
+          "status": 502,
+          "url": "http://127.0.0.1:8081/api/user/selectById/17"
+        },
+        {
+          "status": 502,
+          "url": "http://127.0.0.1:8081/api/activity/selectNotBegin"
+        },
+        {
+          "status": 502,
+          "url": "http://127.0.0.1:8081/api/serviceType/selectFather1"
+        }
+      ]
+    },
+    {
+      "route": "/front/home/FrontHomeView",
+      "role": "user",
+      "theme": "light",
+      "viewport": "mobile",
+      "passed": false,
+      "failures": [
+        "route error boundary is visible",
+        "7 console error(s)",
+        "4 HTTP 5xx response(s)"
+      ],
+      "metrics": {
+        "actualPath": "/front/home/FrontHomeView",
+        "actualRoute": "/front/home/FrontHomeView",
+        "title": "智慧养老首页 · SilverPilot",
+        "theme": "light",
+        "readyState": "complete",
+        "textLength": 133,
+        "visibleElementCount": 39,
+        "appHeight": 844,
+        "appDisplay": "block",
+        "appVisibility": "visible",
+        "appOpacity": "1",
+        "bodyBackground": "rgb(245, 245, 247)",
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "horizontalOverflow": false,
+        "overflowCandidates": [],
+        "interactiveOverlaps": [],
+        "brokenImages": [],
+        "brokenMedia": [],
+        "routeError": true,
+        "errorMessages": [
+          "服务器暂时不可用",
+          "首页数据暂时无法加载，请稍后重试"
+        ],
+        "stuckLoadingMasks": 0
+      },
+      "animationSamples": [],
+      "runtimeErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "Error loading father categories: AxiosError: Request failed with status code 502 at settle (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:1934:14) at XMLHttpRequest.onloadend (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:2367:4)",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "页面渲染失败 AxiosError: Request failed with status code 502 at settle (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:1934:14) at XMLHttpRequest.onloadend (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:2367:4)",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "An error occurred: AxiosError: Request failed with status code 502 at settle (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:1934:14) at XMLHttpRequest.onloadend (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:2367:4) at Axios$1.request (http://127.0.0.1:8081/node_modules/.vite/deps/axios.js?v=823f7bb7:3188:37) at async Proxy.selectFather (http://127.0.0.1:8081/src/stores/servicetype.js:31:39) at async fetchAllServices (http://127.0.0.1:8081/src/components/front/home/FrontHomeView.vue:58:5) at async Promise.all (index 1)"
+      ],
+      "consoleWarnings": [],
+      "badResponses": [
+        {
+          "status": 502,
+          "url": "http://127.0.0.1:8081/api/serviceType/selectFather1"
+        },
+        {
+          "status": 502,
+          "url": "http://127.0.0.1:8081/api/user/selectById/17"
+        },
+        {
+          "status": 502,
+          "url": "http://127.0.0.1:8081/api/activity/selectNotBegin"
+        },
+        {
+          "status": 502,
+          "url": "http://127.0.0.1:8081/api/serviceType/selectFather1"
+        }
+      ]
+    }
+  ]
+}

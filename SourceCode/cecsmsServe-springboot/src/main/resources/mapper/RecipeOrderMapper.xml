@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cecsmsserve.mapper.RecipeOrderMapper">
+
+    <resultMap id="BaseResultMap" type="com.cecsmsserve.entity.RecipeOrder">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="recipe_id" property="recipeId" />
+        <result column="order_time" property="orderTime" />
+        <result column="status" property="status" />
+        <result column="complete_time" property="completeTime" />
+        <result column="remark" property="remark" />
+        <result column="people_count" property="peopleCount" />
+        <result column="create_time" property="createTime" />
+        <!-- 关键修复：添加关联字段映射 -->
+        <result column="recipe_name" property="recipeName" />
+        <result column="recipe_image_url" property="recipeImageUrl" />
+        <result column="user_name" property="userName" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ro.id, ro.user_id, ro.recipe_id, ro.order_time, ro.status,
+        ro.complete_time, ro.remark, ro.people_count, ro.create_time
+    </sql>
+
+    <select id="selectUserOrders" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />,
+        r.name as recipe_name,
+        r.image_url as recipe_image_url
+        FROM recipe_order ro
+        LEFT JOIN recipe r ON ro.recipe_id = r.id
+        WHERE ro.user_id = #{userId}
+        <if test="recipeName != null and recipeName != ''">
+            AND r.name LIKE CONCAT('%', #{recipeName}, '%')
+        </if>
+        <if test="status != null">
+            AND ro.status = #{status}
+        </if>
+        ORDER BY ro.order_time DESC
+    </select>
+
+    <select id="selectAllOrders" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />,
+        u.name as user_name,
+        r.name as recipe_name,
+        r.image_url as recipe_image_url
+        FROM recipe_order ro
+        LEFT JOIN user u ON ro.user_id = u.id
+        LEFT JOIN recipe r ON ro.recipe_id = r.id
+        WHERE 1=1
+        <if test="recipeName != null and recipeName != ''">
+            AND r.name LIKE CONCAT('%', #{recipeName}, '%')
+        </if>
+        <if test="status != null">
+            AND ro.status = #{status}
+        </if>
+        ORDER BY ro.create_time DESC
+    </select>
+
+    <update id="updateOrderStatus">
+        UPDATE recipe_order
+        SET status = #{status},
+            complete_time = CASE
+                WHEN #{status} = 1 THEN NOW()
+                ELSE NULL
+            END,
+            update_time = NOW()
+        WHERE id = #{id} AND status = 0
+    </update>
+
+</mapper>

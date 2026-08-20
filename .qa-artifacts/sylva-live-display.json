@@ -1,0 +1,388 @@
+{
+  "generatedAt": "2026-08-20T13:33:24.031Z",
+  "durationMs": 10946,
+  "browser": "msedge.exe",
+  "screenshotDirectory": "D:\\program\\java\\silverpilot\\.qa-artifacts\\sylva-live\\silverpilot-display-audit-SAXQPN",
+  "cases": 2,
+  "passed": 1,
+  "failed": 1,
+  "reducedMotion": false,
+  "performanceAudits": [
+    {
+      "route": "/front/home/FrontHomeView",
+      "viewport": "desktop",
+      "theme": "light",
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 6,
+          "runningAnimations": 3,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "canvas.care-landscape-canvas"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.el-carousel.el-carousel--horizontal"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.07,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 888,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.03,
+          "p95FrameMs": 4.4,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 1985,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.06,
+          "p95FrameMs": 4.4,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 896,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.01,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        }
+      ]
+    },
+    {
+      "route": "/front/home/FrontHomeView",
+      "viewport": "mobile",
+      "theme": "light",
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 5,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [],
+          "canvases": [],
+          "framesSampled": 30,
+          "averageFrameMs": 4.07,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 1561,
+          "animations": 6,
+          "runningAnimations": 2,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.12,
+          "p95FrameMs": 4.5,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 3105,
+          "animations": 6,
+          "runningAnimations": 2,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "canvas.care-landscape-canvas"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.12,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 1641,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.42,
+          "p95FrameMs": 5,
+          "longFrames": 0
+        }
+      ]
+    }
+  ],
+  "failures": [
+    {
+      "route": "/front/home/FrontHomeView",
+      "role": "user",
+      "theme": "light",
+      "viewport": "desktop",
+      "passed": false,
+      "failures": [
+        "1 offscreen canvas animation loop(s) remained active"
+      ],
+      "metrics": {
+        "actualPath": "/front/home/FrontHomeView",
+        "actualRoute": "/front/home/FrontHomeView",
+        "title": "智慧养老首页 · SilverPilot",
+        "theme": "light",
+        "readyState": "complete",
+        "textLength": 1163,
+        "visibleElementCount": 84,
+        "appHeight": 2991.578125,
+        "appDisplay": "block",
+        "appVisibility": "visible",
+        "appOpacity": "1",
+        "bodyBackground": "rgb(245, 245, 247)",
+        "documentWidth": 1425,
+        "viewportWidth": 1440,
+        "horizontalOverflow": false,
+        "overflowCandidates": [
+          {
+            "tag": "DIV",
+            "className": "hero-visual",
+            "clientWidth": 511,
+            "scrollWidth": 535
+          }
+        ],
+        "interactiveOverlaps": [],
+        "brokenImages": [],
+        "brokenMedia": [],
+        "routeError": false,
+        "errorMessages": [],
+        "stuckLoadingMasks": 0
+      },
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 6,
+          "runningAnimations": 3,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "canvas.care-landscape-canvas"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.el-carousel.el-carousel--horizontal"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.07,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 888,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.03,
+          "p95FrameMs": 4.4,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 1985,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.06,
+          "p95FrameMs": 4.4,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 896,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.01,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        }
+      ],
+      "runtimeErrors": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "badResponses": []
+    }
+  ]
+}

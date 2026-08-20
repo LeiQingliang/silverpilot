@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  project-verification:
+    name: Project verification
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          cache-dependency-path: SourceCode/cecsmsServe-springboot/pom.xml
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.19.0"
+          cache: npm
+          cache-dependency-path: SourceCode/cecsmsui-vue/package-lock.json
+
+      - name: Pin npm
+        shell: pwsh
+        run: ./scripts/install-pinned-npm.ps1
+
+      - name: Install frontend dependencies
+        shell: pwsh
+        working-directory: SourceCode/cecsmsui-vue
+        run: npm ci
+
+      - name: Verify publication safety
+        shell: pwsh
+        run: ./scripts/verify-publication-safety.ps1
+
+      - name: Run project quality gate
+        shell: pwsh
+        run: ./scripts/verify-project.ps1
+
+  java-sca:
+    name: Java dependency vulnerability scan
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          cache-dependency-path: SourceCode/cecsmsServe-springboot/pom.xml
+
+      - name: Determine Dependency-Check cache generation
+        id: odc-date
+        shell: pwsh
+        run: '"date=$((Get-Date).ToUniversalTime().ToString(''yyyy-MM-dd''))" >> $env:GITHUB_OUTPUT'
+
+      - name: Restore persistent Dependency-Check database
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .dependency-check-data
+          key: windows-odc-13.0.0-${{ steps.odc-date.outputs.date }}
+          restore-keys: |
+            windows-odc-13.0.0-
+
+      - name: Refresh mirror cache and run bounded offline scan
+        shell: pwsh
+        run: ./scripts/invoke-dependency-check.ps1 -Mode All -UpdateTimeoutMinutes 15 -ScanTimeoutMinutes 10 -MaximumDataAgeHours 168
+
+      - name: Preserve Dependency-Check reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: java-dependency-check-${{ github.run_id }}
+          path: SourceCode/cecsmsServe-springboot/target/dependency-check/*
+          if-no-files-found: warn
+          retention-days: 14
+
+  database-contract:
+    name: Database contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Validate Compose model
+        run: docker compose --env-file .env.docker.example --profile full config --quiet
+
+      - name: Start isolated MySQL
+        run: docker compose --env-file .env.docker.example up -d --wait --wait-timeout 180 mysql
+
+      - name: Verify seed and schema contracts
+        shell: pwsh
+        run: ./scripts/verify-database-seed.ps1 -EnvironmentFile ./.env.docker.example
+
+      - name: Clean up containers
+        if: always()
+        run: docker compose --env-file .env.docker.example down --remove-orphans

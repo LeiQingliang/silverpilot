@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cecsmsserve.mapper.UserActivityMapper">
+    <resultMap id="userActivityMap" type="com.cecsmsserve.entity.UserActivity">
+        <id property="id" column="id"/>
+        <result property="uId" column="uId"/>
+        <result property="aId" column="aId"/>
+        <association property="user" javaType="com.cecsmsserve.entity.User" column="uId"
+                     select="com.cecsmsserve.mapper.UserMapper.selectById"/>
+        <association property="activity" javaType="com.cecsmsserve.entity.Activity" column="aId"
+                     select="com.cecsmsserve.mapper.ActivityMapper.selectDetailById"/>
+    </resultMap>
+
+    <select id="selectAllByuId" resultType="com.cecsmsserve.entity.vo.MyActivity">
+        SELECT ua.id,u1.id as uId,ua.state as myState,a.activityName,a.activityDate,a.startTime,a.activityAddress,a.activityPoint,t.type,u2.name,u2.telephone,actstate.state as aState
+        FROM user_activity ua
+                 JOIN activity a ON ua.aId = a.id
+                 JOIN activity_state actstate ON a.state=actstate.id
+                 JOIN activity_type t ON a.activityTypeId=t.id
+                 JOIN user u2 ON a.dId = u2.id
+                 JOIN user u1 ON ua.uId = u1.id
+        WHERE uId = #{uId}
+    </select>
+    <select id="selectByUIdBymyState" resultType="com.cecsmsserve.entity.vo.MyActivity">
+        SELECT ua.id,u1.id as uId,ua.state as myState,a.activityName,a.activityDate,a.startTime,a.activityAddress,a.activityPoint,t.type,u2.name,u2.telephone,actstate.state as aState
+        FROM user_activity ua
+                 JOIN activity a ON ua.aId = a.id
+                 JOIN activity_state actstate ON a.state=actstate.id
+                 JOIN activity_type t ON a.activityTypeId=t.id
+                 JOIN user u2 ON a.dId = u2.id
+                 JOIN user u1 ON ua.uId = u1.id
+        WHERE u1.id = #{uId} AND ua.state = #{state}
+    </select>
+    <select id="selectByUIdByState" resultType="com.cecsmsserve.entity.vo.MyActivity">
+        SELECT ua.id,u1.id as uId,ua.state as myState,a.activityName,a.activityDate,a.startTime,a.activityAddress,a.activityPoint,t.type,u2.name,u2.telephone,actstate.state as aState
+        FROM user_activity ua
+                 JOIN activity a ON ua.aId = a.id
+                 JOIN activity_state actstate ON a.state=actstate.id
+                 JOIN activity_type t ON a.activityTypeId=t.id
+                 JOIN user u2 ON a.dId = u2.id
+                 JOIN user u1 ON ua.uId = u1.id
+        WHERE u1.id = #{uId} AND actstate.state = #{state}
+    </select>
+</mapper>

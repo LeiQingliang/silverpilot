@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cecsmsserve.mapper.ReportMapper">
+
+    <resultMap id="reportMap" type="com.cecsmsserve.entity.Report">
+        <id property="id" column="id"/>
+        <result property="uId" column="uId"/>
+        <result property="dId" column="dId"/>
+        <association property="doctor" javaType="com.cecsmsserve.entity.User" column="dId"
+                     select="com.cecsmsserve.mapper.UserMapper.selectById"/>
+        <association property="user" javaType="com.cecsmsserve.entity.User" column="uId"
+                     select="com.cecsmsserve.mapper.UserMapper.selectById"/>
+    </resultMap>
+</mapper>

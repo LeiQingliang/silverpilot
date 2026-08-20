@@ -1,0 +1,41 @@
+name: Feature request
+description: Propose a scoped capability or improvement
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched existing issues, discussions, and the roadmap.
+          required: true
+        - label: The proposal contains no real personal or health data.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and user
+      description: Which verified user problem does this solve, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Include boundaries, alternatives, and any API/data model impact.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable, testable outcomes.
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Safety, privacy, and compatibility risks
+      description: Explain relevant failure modes and mitigations.

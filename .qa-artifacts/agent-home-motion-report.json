@@ -1,0 +1,636 @@
+{
+  "generatedAt": "2026-08-20T14:46:54.435Z",
+  "durationMs": 10686,
+  "browser": "msedge.exe",
+  "screenshotDirectory": "D:\\program\\java\\silverpilot\\.qa-artifacts\\agent-home-motion\\silverpilot-display-audit-yd9bQt",
+  "cases": 2,
+  "passed": 2,
+  "failed": 0,
+  "reducedMotion": false,
+  "performanceAudits": [
+    {
+      "route": "/front/home/FrontHomeView",
+      "viewport": "desktop",
+      "theme": "light",
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 34,
+          "runningAnimations": 25,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 1425,
+              "height": 1000
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 6.45,
+          "p95FrameMs": 20.8,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 1149,
+          "animations": 51,
+          "runningAnimations": 27,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "header"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "header"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "header"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item.is-active"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item.is-active"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.hero-base.hero-zoom"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i.hero-glyph"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.hero-cta"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.hero-play-sheen"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.hero-card-media"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.hero-card-media"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.hero-note-image.hero-card-media"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.hero-note-image.hero-card-media"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 1425,
+              "height": 1000
+            },
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.24,
+          "p95FrameMs": 4.7,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 2090,
+          "animations": 35,
+          "runningAnimations": 5,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.hero-cta"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.hero-play-sheen"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "canvas.care-landscape-canvas"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 1425,
+              "height": 1000
+            },
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.08,
+          "p95FrameMs": 4.4,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 1150,
+          "animations": 35,
+          "runningAnimations": 4,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.hero-cta"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.hero-play-sheen"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 1425,
+              "height": 1000
+            },
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.08,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        }
+      ]
+    },
+    {
+      "route": "/front/home/FrontHomeView",
+      "viewport": "mobile",
+      "theme": "light",
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 27,
+          "runningAnimations": 19,
+          "offscreenRunningAnimations": [],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 390,
+              "height": 844
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.08,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 1402,
+          "animations": 44,
+          "runningAnimations": 25,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "header"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "header"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "header"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item.is-active"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item.is-active"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "li.el-menu-item"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.user-trigger.el-tooltip__trigger"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.hero-base.hero-zoom"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i.hero-glyph"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i.hero-glyph"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i.hero-glyph"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.hero-cta"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.hero-play-sheen"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.01,
+          "p95FrameMs": 8.4,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 3012,
+          "animations": 28,
+          "runningAnimations": 6,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.hero-base.hero-zoom"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.hero-cta"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.hero-play-sheen"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "canvas.care-landscape-canvas"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.01,
+          "p95FrameMs": 4.2,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 1472,
+          "animations": 28,
+          "runningAnimations": 4,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "button.hero-cta"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.hero-play-sheen"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "i"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "spotlight-canvas",
+              "inViewport": false,
+              "animationActive": "unreported",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "agent-signal-field",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 390,
+              "height": 844
+            },
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.06,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        }
+      ]
+    }
+  ],
+  "failures": []
+}

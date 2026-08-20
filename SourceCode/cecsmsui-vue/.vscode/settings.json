@@ -1,0 +1,6 @@
+{
+  "npm.packageManager": "npm",
+  "npm.scriptExplorerAction": "run",
+  "editor.formatOnSave": false,
+  "files.eol": "\n"
+}

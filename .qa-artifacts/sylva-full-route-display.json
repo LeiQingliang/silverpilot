@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-08-20T13:40:20.129Z",
+  "durationMs": 91326,
+  "browser": "msedge.exe",
+  "screenshotDirectory": "D:\\program\\java\\silverpilot\\.qa-artifacts\\sylva-full-route\\silverpilot-display-audit-3RHl6U",
+  "cases": 102,
+  "passed": 102,
+  "failed": 0,
+  "reducedMotion": false,
+  "performanceAudits": [],
+  "failures": []
+}

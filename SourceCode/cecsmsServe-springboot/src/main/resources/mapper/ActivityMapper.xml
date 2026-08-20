@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cecsmsserve.mapper.ActivityMapper">
+
+    <resultMap id="activityMap" type="com.cecsmsserve.entity.Activity">
+        <id property="id" column="id"/>
+        <result property="activityTypeId" column="activityTypeId"/>
+        <result property="dId" column="dId"/>
+        <association property="director" javaType="com.cecsmsserve.entity.User" column="dId"
+                     select="com.cecsmsserve.mapper.UserMapper.selectById"/>
+        <association property="activityType" javaType="com.cecsmsserve.entity.ActivityType" column="activityTypeId"
+                     select="com.cecsmsserve.mapper.ActivityTypeMapper.selectById"/>
+    </resultMap>
+
+    <select id="countSignedUpNum" resultType="map">
+        WITH TotalSignUps AS (
+            SELECT
+                at.type AS ActivityType,
+                COUNT(ua.id) AS NumberOfSignUps,
+                SUM(COUNT(ua.id)) OVER () AS TotalSignUpsAll
+            FROM
+                activity_type at
+            JOIN
+            activity a ON at.id = a.activityTypeId
+            LEFT JOIN
+            user_activity ua ON a.id = ua.aId AND ua.state = '报名成功'
+            GROUP BY
+        at.id, at.type)
+        SELECT
+            ActivityType,
+            NumberOfSignUps,
+            (NumberOfSignUps * 100.0 / TotalSignUpsAll) AS PercentageOfSignUps
+        FROM
+            TotalSignUps
+    </select>
+
+    <select id="countActivitySort" resultType="map">
+        SELECT activityName,signNum
+        FROM activity
+        ORDER BY signNum DESC,activityDate ASC
+            LIMIT 5
+    </select>
+</mapper>

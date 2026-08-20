@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cecsmsserve.mapper.ServiceOrderMapper">
+    <resultMap id="serviceOrderMap" type="com.cecsmsserve.entity.ServiceOrder">
+        <id property="id" column="id"/>
+        <result property="uId" column="uId"/>
+        <result property="mId" column="mId"/>
+        <result property="dId" column="dId"/>
+        <result property="typeBId" column="typeBId"/>
+        <result property="typeSId" column="typeSId"/>
+        <association property="user" javaType="com.cecsmsserve.entity.User" column="uId"
+                     select="com.cecsmsserve.mapper.UserMapper.selectById"/>
+        <association property="manager" javaType="com.cecsmsserve.entity.User" column="handlerId"
+                     select="com.cecsmsserve.mapper.UserMapper.selectById"/>
+        <association property="typeB" javaType="com.cecsmsserve.entity.ServiceType" column="typeBId"
+                     select="com.cecsmsserve.mapper.ServiceTypeMapper.selectById"/>
+        <association property="typeS" javaType="com.cecsmsserve.entity.ServiceType" column="typeSId"
+                     select="com.cecsmsserve.mapper.ServiceTypeMapper.selectById"/>
+    </resultMap>
+
+    <select id="countRate" resultType="map">
+        SELECT rate ,count(*) AS count
+        FROM service_order
+        WHERE orderState = 4
+        GROUP BY rate
+    </select>
+</mapper>

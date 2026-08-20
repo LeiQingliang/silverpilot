@@ -1,0 +1,223 @@
+{
+  "generatedAt": "2026-08-20T13:33:58.433Z",
+  "durationMs": 9952,
+  "browser": "msedge.exe",
+  "screenshotDirectory": "D:\\program\\java\\silverpilot\\.qa-artifacts\\sylva-live-fixed\\silverpilot-display-audit-AMcZBF",
+  "cases": 2,
+  "passed": 2,
+  "failed": 0,
+  "reducedMotion": false,
+  "performanceAudits": [
+    {
+      "route": "/front/home/FrontHomeView",
+      "viewport": "desktop",
+      "theme": "light",
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 5,
+          "runningAnimations": 2,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "div.el-carousel.el-carousel--horizontal"
+            }
+          ],
+          "canvases": [],
+          "framesSampled": 30,
+          "averageFrameMs": 4.04,
+          "p95FrameMs": 4.4,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 889,
+          "animations": 6,
+          "runningAnimations": 2,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.04,
+          "p95FrameMs": 4.2,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 1984,
+          "animations": 6,
+          "runningAnimations": 2,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "canvas.care-landscape-canvas"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.05,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 895,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 612,
+              "height": 705
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.07,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        }
+      ]
+    },
+    {
+      "route": "/front/home/FrontHomeView",
+      "viewport": "mobile",
+      "theme": "light",
+      "animationSamples": [
+        {
+          "stage": "page-top",
+          "scrollY": 0,
+          "animations": 5,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [],
+          "canvases": [],
+          "framesSampled": 30,
+          "averageFrameMs": 4.05,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-visible",
+          "scrollY": 1568,
+          "animations": 6,
+          "runningAnimations": 2,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 3.85,
+          "p95FrameMs": 4.6,
+          "longFrames": 0
+        },
+        {
+          "stage": "page-end",
+          "scrollY": 3098,
+          "animations": 6,
+          "runningAnimations": 2,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            },
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "canvas.care-landscape-canvas"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": false,
+              "animationActive": "false",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.01,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        },
+        {
+          "stage": "care-landscape-restored",
+          "scrollY": 1646,
+          "animations": 6,
+          "runningAnimations": 1,
+          "offscreenRunningAnimations": [
+            {
+              "playState": "running",
+              "inViewport": false,
+              "target": "span.agent-nav-dot"
+            }
+          ],
+          "canvases": [
+            {
+              "className": "care-landscape-canvas",
+              "inViewport": true,
+              "animationActive": "true",
+              "width": 330,
+              "height": 468
+            }
+          ],
+          "framesSampled": 30,
+          "averageFrameMs": 4.17,
+          "p95FrameMs": 4.3,
+          "longFrames": 0
+        }
+      ]
+    }
+  ],
+  "failures": []
+}

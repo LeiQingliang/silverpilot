@@ -1,0 +1,24 @@
+{
+  "name": "SilverPilot ima-ready knowledge pack",
+  "version": "1.0.0",
+  "owner": "qinglianglei",
+  "reviewedAt": "2026-08-18",
+  "runtimePolicy": "Only Markdown documents with status=approved are indexed",
+  "documents": [
+    "ima-ready/00-知识库治理规范.md",
+    "ima-ready/01-产品与业务边界.md",
+    "ima-ready/02-Agent能力与安全策略.md",
+    "ima-ready/03-养老服务业务SOP.md",
+    "ima-ready/04-健康问答安全边界.md",
+    "ima-ready/05-AI销售演示与客户异议.md",
+    "ima-ready/06-Agent运营指标口径.md",
+    "ima-ready/07-WorkBuddy升级与扩展流程.md",
+    "ima-ready/08-机器人与半导体行业扩展映射.md"
+  ],
+  "authoritativeTechnicalSources": [
+    "https://cloud.tencent.com/document/product/1831/134527",
+    "https://cloud.tencent.com/document/product/1831/134453",
+    "https://cloud.tencent.com/document/product/1831/134516",
+    "https://www.volcengine.com/docs/82379/66619f8df281250274ef4f88?lang=zh"
+  ]
+}

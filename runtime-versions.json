@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "projectVersion": "1.0.1",
+  "verifiedOn": "2026-08-20",
+  "java": {
+    "ltsMajor": 25,
+    "hostRelease": "25.0.4+7",
+    "dockerJdkTag": "25.0.3_9-jdk-resolute",
+    "dockerJreTag": "25.0.3_9-jre-resolute"
+  },
+  "springBoot": "4.1.0",
+  "maven": "3.9.16",
+  "dependencyCheck": "13.0.0",
+  "node": "24.19.0",
+  "npm": "12.0.2",
+  "npmTarballSha256": "5dbb86c71d07a1957f2e90734092dd6a58bdcd9ebc2d8d41ca1c6e6a21d364e1",
+  "dockerEngine": "29.7.2",
+  "dockerCompose": "5.5.0",
+  "mysql": {
+    "ltsLine": "9.7",
+    "version": "9.7.2"
+  },
+  "redis": {
+    "extendedLine": "8.2",
+    "version": "8.2.9",
+    "sourceSha256": "531b314e5557ad76d941f605b3e3162ac61dc141f37c407e1f91fcfe17ea8c30"
+  },
+  "nginx": "1.30.4",
+  "go": {
+    "stable": "1.27.0",
+    "docker": "1.27.0"
+  },
+  "alpine": "3.24.1",
+  "dockerImageDigests": {
+    "temurinJdk": "sha256:76b2c606540ac8de355f28f5a3979071456a13a531989d93ace4a2d995785ff1",
+    "temurinJre": "sha256:9492fc3850879f8b2a29a3eaf2005f591698f0f6c0427d812e342df8adde95aa",
+    "node": "sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43",
+    "nginx": "sha256:ddde39c6e51f02fde7410c2e9c234cf2d0a4c7bdbbe176aeb37d8ad7ab4eb58c",
+    "golang": "sha256:4c9fe60190a2a3350ddc51de80d0224b8a6698d12bdfc999fee45ea9d6c46dbc",
+    "mysql": "sha256:257388edf9c84dbc04c763625446d5f3fa6ed60d1b0873bc552c614ba0a7ab4e",
+    "alpine": "sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b"
+  }
+}

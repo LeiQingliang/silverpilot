@@ -1,0 +1,39 @@
+# Local secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+user.txt
+**/application-local.properties
+**/application-host.properties
+.startup-build-state.json
+
+# Build output and dependencies
+**/target/
+**/node_modules/
+**/dist/
+**/coverage/
+**/logs/
+*.log
+/release-artifacts/
+
+# Editors and operating systems
+**/.idea/
+**/.classpath
+**/.project
+**/.settings/
+**/.DS_Store
+**/Thumbs.db
+
+# Runtime uploads and original private coursework material are kept locally.
+/file/
+/image/
+/video/
+/document/
+/backups/
+
+# Security scanners produce machine-specific raw databases/reports.
+/.dependency-check-data/
+/security-reports/raw/
+/.scannerwork/
+*.sarif
