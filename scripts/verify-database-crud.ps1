@@ -129,12 +129,19 @@ try {
     $activity['id'] = $createdId
     $activity['activityName'] = $updatedMarker
     $activity['activityDetail'] = 'updated-through-optimistic-state-gates'
+    $activity['activityDate'] = (Get-Date).Date.AddDays(45).ToString('yyyy-MM-dd')
     $updated = Invoke-RestMethod -Uri "$BaseUrl/api/activity/update" -Method Post -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ($activity | ConvertTo-Json -Compress) -TimeoutSec 10
     Assert-Success $updated 'Update the disposable row through the complete application path'
-    if ((Get-Scalar "SELECT COUNT(*) FROM activity WHERE id=$createdId AND activityName='$updatedMarker' AND activityDetail='updated-through-optimistic-state-gates';") -ne '1') {
+    if ((Get-Scalar "SELECT COUNT(*) FROM activity WHERE id=$createdId AND activityName='$updatedMarker' AND activityDetail='updated-through-optimistic-state-gates' AND activityDate='$($activity['activityDate'])' AND startTime='09:00:00' AND endTime='10:00:00';") -ne '1') {
         throw 'The MySQL row did not receive the expected update.'
     }
     Write-Host '[PASS] MySQL contains the API-updated values.' -ForegroundColor Green
+    $readUpdated = Invoke-RestMethod -Uri "$BaseUrl/api/activity/selectById/$createdId" -Headers $headers -TimeoutSec 10
+    Assert-Success $readUpdated 'Read the edited activity date back through the application'
+    if ([string]$readUpdated.result.activityDate -ne [string]$activity['activityDate']) {
+        throw 'The edited date was not preserved by the database-to-JSON round trip.'
+    }
+    Write-Host '[PASS] Edited activity date persists in MySQL and the fresh API response.' -ForegroundColor Green
 
     $deleted = Invoke-RestMethod -Uri "$BaseUrl/api/activity/delete/$createdId" -Method Post -Headers $headers -TimeoutSec 10
     Assert-Success $deleted 'Delete the disposable row through the complete application path'
