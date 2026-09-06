@@ -3,7 +3,7 @@ $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 
 Push-Location $projectRoot
 try {
-    $paths = @(& git ls-files --cached --others --exclude-standard)
+    $paths = @(& git -c core.quotepath=false ls-files --cached --others --exclude-standard)
     if ($LASTEXITCODE -ne 0) { throw 'Unable to enumerate publishable files.' }
 
     $forbidden = @($paths | Where-Object {

@@ -4,42 +4,74 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $composeFile = Join-Path $projectRoot 'compose.yaml'
-$environmentFile = Join-Path $projectRoot '.env.docker'
+. (Join-Path $PSScriptRoot 'project-lifecycle.ps1')
 
-if ($null -eq (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host '[PASS] Docker CLI is unavailable, so no Docker service was stopped. IDEA and VSCode processes were not touched.' -ForegroundColor Green
-    exit 0
+function Invoke-StopDocker([string[]]$Arguments) {
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = @(& docker @Arguments 2>&1)
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($exitCode -ne 0) { throw "Unable to complete or verify Docker shutdown: $($output -join '; ')" }
+    return @($output | ForEach-Object { [string]$_ })
 }
 
-& docker info --format '{{.ServerVersion}}' *> $null
-if ($LASTEXITCODE -ne 0) {
-    Write-Host '[PASS] Docker Engine is not running. IDEA and VSCode processes were not touched.' -ForegroundColor Green
-    exit 0
+function Get-CheckoutContainers {
+    $ids = @(Invoke-StopDocker @('ps', '-aq', '--filter', 'label=com.docker.compose.project.working_dir'))
+    foreach ($containerId in $ids) {
+        if ([string]::IsNullOrWhiteSpace($containerId)) { continue }
+        # Inspect ownership metadata only; never expose container environment secrets.
+        $metadata = (Invoke-StopDocker @('inspect', '--format', '{{json .Config.Labels}}', $containerId)) -join '' | ConvertFrom-Json
+        $workingDirectory = [string]$metadata.'com.docker.compose.project.working_dir'
+        $configurationFiles = @(([string]$metadata.'com.docker.compose.project.config_files').Split(','))
+        if (-not [string]::Equals($workingDirectory.TrimEnd('\', '/'), $projectRoot.TrimEnd('\', '/'), [StringComparison]::OrdinalIgnoreCase)) { continue }
+        if (-not ($configurationFiles | Where-Object { [string]::Equals($_.Trim(), $composeFile, [StringComparison]::OrdinalIgnoreCase) })) { continue }
+        [pscustomobject]@{
+            Id = $containerId
+            Project = [string]$metadata.'com.docker.compose.project'
+            Service = [string]$metadata.'com.docker.compose.service'
+        }
+    }
 }
 
-if (-not (Test-Path -LiteralPath $environmentFile)) {
-    Write-Host '[PASS] .env.docker is absent; there is no configured SilverPilot Docker stack to stop.' -ForegroundColor Green
-    exit 0
+$lifecycleLock = Enter-ProjectLifecycleLock $projectRoot
+try {
+    if ($null -eq (Get-Command docker -ErrorAction SilentlyContinue)) {
+        throw 'Docker CLI is unavailable; shutdown cannot be performed or verified. Restore Docker CLI and retry.'
+    }
+    Invoke-StopDocker @('info', '--format', '{{.ServerVersion}}') | Out-Null
+    $containers = @(Get-CheckoutContainers)
+    if ($containers.Count -gt 0) {
+        Write-Host "[INFO] Stopping $($containers.Count) Docker containers owned by this checkout; named volumes are preserved." -ForegroundColor Cyan
+        $networks = @{}
+        foreach ($container in $containers) {
+            $attached = (Invoke-StopDocker @('inspect', '--format', '{{json .NetworkSettings.Networks}}', $container.Id)) -join '' | ConvertFrom-Json
+            foreach ($network in $attached.PSObject.Properties.Name) { $networks[$network] = $container.Project }
+        }
+        # Persisted Compose labels allow shutdown after the environment file was
+        # lost or renamed. Explicit IDs cannot target another checkout by name.
+        $containerIds = @($containers | ForEach-Object { $_.Id })
+        $stopOrder = @{ frontend = 0; backend = 1; redis = 3; mysql = 4 }
+        foreach ($container in ($containers | Sort-Object { if ($stopOrder.ContainsKey($_.Service)) { $stopOrder[$_.Service] } else { 2 } })) {
+            Invoke-StopDocker @('stop', '--timeout', [string][Math]::Max(60, $WaitTimeoutSeconds), $container.Id) | Out-Null
+        }
+        Invoke-StopDocker (@('rm') + $containerIds) | Out-Null
+        foreach ($networkName in $networks.Keys) {
+            $network = (Invoke-StopDocker @('network', 'inspect', $networkName)) -join '' | ConvertFrom-Json
+            if ($network.Labels.'com.docker.compose.project' -eq $networks[$networkName] -and @($network.Containers.PSObject.Properties).Count -eq 0) {
+                Invoke-StopDocker @('network', 'rm', $networkName) | Out-Null
+            }
+        }
+    }
+    if (@(Get-CheckoutContainers).Count -ne 0) { throw 'Docker containers for this checkout remain after shutdown.' }
+    Write-Host '[PASS] SilverPilot Docker services stopped and verified; named volumes were preserved.' -ForegroundColor Green
+    Write-Host '[BOUNDARY] Stop the local backend in IDEA and the local frontend in VSCode; those application processes remain IDE-owned.' -ForegroundColor Cyan
+} finally {
+    Exit-ProjectLifecycleLock $lifecycleLock
 }
-
-Write-Host '[INFO] Stopping only SilverPilot Docker services; named volumes are preserved.' -ForegroundColor Cyan
-& docker compose --project-directory $projectRoot --file $composeFile --env-file $environmentFile --profile full down --remove-orphans
-if ($LASTEXITCODE -ne 0) { throw "Docker Compose cleanup returned exit code $LASTEXITCODE." }
-
-$deadline = [DateTime]::UtcNow.AddSeconds($WaitTimeoutSeconds)
-do {
-    $remainingContainers = @(& docker compose --project-directory $projectRoot --file $composeFile --env-file $environmentFile --profile full ps --quiet)
-    if ($LASTEXITCODE -ne 0) { throw 'Unable to verify Docker Compose cleanup.' }
-    if ($remainingContainers.Count -eq 0) { break }
-    Start-Sleep -Milliseconds 500
-} while ([DateTime]::UtcNow -lt $deadline)
-
-if ($remainingContainers.Count -gt 0) {
-    throw "SilverPilot Docker containers are still present after cleanup: $($remainingContainers -join ', ')"
-}
-
-Write-Host '[PASS] SilverPilot Docker services stopped; named volumes were preserved.' -ForegroundColor Green
-Write-Host '[BOUNDARY] IDEA backend and VSCode frontend processes are IDE-owned and were not inspected, stopped, or restarted.' -ForegroundColor Cyan
 exit 0

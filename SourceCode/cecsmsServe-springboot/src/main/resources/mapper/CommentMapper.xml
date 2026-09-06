@@ -39,7 +39,7 @@
         LEFT JOIN user u ON u.id = c.user_id
         LEFT JOIN user reply_user ON reply_user.id = c.reply_to
         WHERE c.is_deleted = 0 AND c.parent_id IS NULL
-        ORDER BY c.create_time DESC
+        ORDER BY c.create_time DESC, c.id DESC
     </select>
 
     <select id="selectRepliesByParentId" resultType="com.cecsmsserve.entity.vo.CommentVo">
@@ -48,7 +48,7 @@
         LEFT JOIN user u ON u.id = c.user_id
         LEFT JOIN user reply_user ON reply_user.id = c.reply_to
         WHERE c.is_deleted = 0 AND c.parent_id = #{parentId}
-        ORDER BY c.create_time ASC
+        ORDER BY c.create_time ASC, c.id ASC
     </select>
 
     <select id="selectManagementListWithUser" resultType="com.cecsmsserve.entity.vo.CommentVo">
@@ -56,7 +56,7 @@
         FROM comment c
         LEFT JOIN user u ON u.id = c.user_id
         LEFT JOIN user reply_user ON reply_user.id = c.reply_to
-        ORDER BY c.create_time DESC
+        ORDER BY c.create_time DESC, c.id DESC
     </select>
 
     <select id="selectDetailIncludingDeleted" resultType="com.cecsmsserve.entity.vo.CommentVo">
@@ -74,7 +74,7 @@
         LEFT JOIN user u ON u.id = c.user_id
         LEFT JOIN user reply_user ON reply_user.id = c.reply_to
         WHERE c.parent_id = #{parentId}
-        ORDER BY c.create_time ASC
+        ORDER BY c.create_time ASC, c.id ASC
     </select>
 
     <select id="selectIncludingDeleted" resultType="com.cecsmsserve.entity.Comment">
@@ -116,7 +116,7 @@
             c.is_deleted AS isDeleted
         FROM comment c
         WHERE c.is_deleted = 0 AND c.user_id = #{userId}
-        ORDER BY c.create_time DESC
+        ORDER BY c.create_time DESC, c.id DESC
     </select>
 
 </mapper>

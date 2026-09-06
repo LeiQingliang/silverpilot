@@ -99,12 +99,18 @@ npm run dev
 
 ## 5. 全 Docker 步骤
 
-Windows 直接双击根目录 `start-docker.cmd`。等价命令为：
+Windows 直接双击根目录 `start-docker.cmd`。成功后窗口保留运行状态，按回车或关闭窗口后，服务仍在 Docker 后台运行；需要停止时使用 `stop-project.cmd`。自动化调用可设置 `SILVERPILOT_NO_PAUSE=1`。显式指定 `-WaitForStop` 时，只有输入 `STOP` 才会停止，直接回车会保留服务。不保留状态窗口的 PowerShell 命令为：
 
 ```powershell
 .\scripts\start-project.ps1 -Mode Docker
 .\scripts\docker-dev.ps1 status
 ```
+
+启动器生命周期回归可单独运行 `pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-startup-lifecycle.ps1`。19 项检查在临时目录运行真实脚本，验证状态窗口保留、窗口结束、回车、浏览器失败、并发操作、配置丢失、重复停止和停止失败；测试不会访问实际 Docker 服务或数据卷。同一工作目录的启动、切换、停止和清理互斥，重复点击时后一个操作会明确提示等待后重试或跳过。
+
+`clean-project-residue.cmd` 默认发现活动容器或项目进程后会直接跳过，保留服务、日志、缓存和构建记录，避免把正在运行的后端当作残留终止。需要主动停止全部项目进程并清理时，使用 `clean-project-residue.cmd --stop-running`；数据卷、源码和依赖保留。`pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-residue-cleanup.ps1` 提供 12 项隔离回归，覆盖运行、重启、暂停、本地进程、并发启动、Docker 不可用、另一工作目录同名容器，以及显式完整清理。
+
+更新后仍保留的旧标签页需要先在登录页按一次 `Ctrl+F5`。入口 HTML 使用 `Cache-Control: no-cache` 重新校验版本；带内容哈希的静态资源继续长期缓存。页面使用中文语言标记并声明禁止自动翻译，以避免翻译器改写 Vue 正在管理的节点。
 
 `start-project.cmd` 仍保留为两种模式的选择菜单。全 Docker 与 IDEA 后端共享主机端口 `8083`，不能同时运行。启动器会先检查 Docker Desktop、必要文件、磁盘空间、端口唯一性/占用和 Compose 展开；如果 IDEA/其他进程占用端口，会报告进程名和 PID，而不会擅自结束进程。构建输入指纹与已验证镜像匹配时使用 `--no-build` 快速启动，不访问镜像仓库；源码、依赖或 Dockerfile 变化后自动重新构建。需要强制重建可加 `-Rebuild`。
 
@@ -130,8 +136,10 @@ Remove-Item Env:CECSMS_QA_BASE_URL
 停止但保留数据：
 
 ```powershell
-.\scripts\docker-dev.ps1 down
+.\stop-project.cmd
 ```
+
+停止入口根据容器保存的 Compose 工作目录和配置文件标签确认归属，依次关闭前端、后端、Redis 和 MySQL，再移除容器与空闲的项目网络；命名卷和其他项目保留。即使 `.env.docker` 丢失或项目名称被修改，仍能停止当前工作目录已启动的容器。Docker CLI/引擎不可用或停止失败时返回错误，不会把无法验证的状态报告为成功。本地应用应先在 VSCode 结束 Vite、在 IDEA 结束 Java，再运行此停止入口关闭 Redis。
 
 重置会永久删除本项目命名卷，只能在确认没有重要数据时执行：
 

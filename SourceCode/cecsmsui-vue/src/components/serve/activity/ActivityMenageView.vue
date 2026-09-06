@@ -1,5 +1,5 @@
 <template>
-    <el-card class="box-card">
+    <el-card class="box-card" translate="no">
         <template #header>
             <div class="card-header">
                 <span>活动管理</span>
@@ -18,7 +18,7 @@
         <el-config-provider :locale="locale">
 
             <!-- 表格 -->
-            <el-table class="desktop-activity-table" :data="tableData" height="400" :row-class-name="tableRowClassName">
+            <el-table class="desktop-activity-table" :data="tableData" row-key="id" height="400" :row-class-name="tableRowClassName">
                 <el-table-column prop="id" label="活动编号" width="90px" fixed />
                 <el-table-column prop="activityName" label="活动名称" width="200px" fixed />
                 <el-table-column prop="image" label="活动图片" width="150">

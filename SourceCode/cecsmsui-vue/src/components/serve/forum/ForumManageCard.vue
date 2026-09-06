@@ -41,6 +41,7 @@
     <!-- 表格组件 -->
     <el-table
       :data="filteredComments"
+      :default-sort="{ prop: 'createTime', order: 'descending' }"
       style="width: 100%"
       height="450"
       v-loading="loading"
@@ -97,8 +98,9 @@
       <el-table-column
         prop="createTime"
         label="发布时间"
-        width="160"
+        width="180"
         sortable
+        :sort-method="(a, b) => compareCommentTimes(a, b, true)"
       >
         <template #default="scope">
           {{ formatTime(scope.row.createTime) }}
@@ -164,6 +166,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import axios from '@/utils/axios'
+import { compareCommentTimes, formatCommentDateTime as formatTime } from '@/utils/comment-time'
 import CommentDetailDialog from './CommentDetailDialog.vue'
 
 // 响应式数据
@@ -296,19 +299,6 @@ const restoreComment = async (commentId) => {
 const viewDetail = (comment) => {
   selectedComment.value = comment
   detailVisible.value = true
-}
-
-const formatTime = (time) => {
-  if (!time) return ''
-  const date = new Date(time)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
 }
 
 const getCommentTypeTag = (comment) => {

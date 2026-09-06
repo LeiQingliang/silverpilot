@@ -25,11 +25,7 @@ user.txt
 **/.DS_Store
 **/Thumbs.db
 
-# Runtime uploads and original private coursework material are kept locally.
-/file/
-/image/
-/video/
-/document/
+# Project images, documents and media are versioned. Runtime backups stay local.
 /backups/
 
 # Security scanners produce machine-specific raw databases/reports.

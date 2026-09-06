@@ -1,8 +1,10 @@
 <template>
   <el-dialog
     width="60%"
+    translate="no"
     v-model="dialogFormVisible"
     :title="dialogFormTitle"
+    :show-close="!saving"
     :before-close="handleClose"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
@@ -12,7 +14,8 @@
     modal-class="no-animate-dialog topmost-dialog"
     center
   >
-    <el-form ref="formData" :model="formdata" label-width="100px">
+    <el-alert v-if="saveError" :title="saveError" type="error" :closable="false" show-icon class="save-error" />
+    <el-form ref="formData" :model="formdata" :disabled="saving" label-width="100px">
       <!-- 第一行：活动名称 + 活动类别 -->
       <el-row :gutter="20">
         <el-col :span="12">
@@ -32,13 +35,15 @@
       <!-- 第二行：活动日期 + 开始时间 + 结束时间 -->
       <el-row :gutter="20">
         <el-col :span="8">
-          <el-form-item label="活动日期">
+          <el-form-item label="活动日期" @input.capture="captureDateInput">
             <el-date-picker
               v-model="formdata.activityDate"
               type="date"
               placeholder="选择活动日期"
-              :disabledDate="hiredateDisabledDate"
+              :disabled-date="hiredateDisabledDate"
               :shortcuts="hiredateShortcuts"
+              popper-class="activity-date-popper"
+              @clear="clearDateInput"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 100%"
@@ -127,44 +132,80 @@
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="canelDialog">取消</el-button>
-        <el-button type="primary" @click="toSave" :icon="Promotion">保存</el-button>
+        <el-button @click="canelDialog" :disabled="saving">取消</el-button>
+        <el-button type="primary" @click="toSave" :icon="Promotion" :loading="saving">保存</el-button>
       </span>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Promotion, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useActivityStore } from '../../../stores/activity'
 import { prepareImageUpload } from '../../../utils/upload.js'
+import { activityDateShortcut, getActivityDateError, isActivityDateDisabled } from '../../../utils/activity-date.js'
 
 const activityStore = useActivityStore()
-const { dialogFormTitle, dialogFormVisible, directorsData, typesData, formdata } = storeToRefs(activityStore)
+const { dialogFormTitle, dialogFormVisible, directorsData, typesData, formdata, saving, saveError } = storeToRefs(activityStore)
 
 const activityTypeId = ref(null)
 const directorId = ref(null)
+const dateInput = ref(null)
+
+const captureDateInput = (event) => {
+  dateInput.value = event.target.value
+}
+const clearDateInput = () => {
+  dateInput.value = null
+}
+
+// The picker also emits change when it normalizes typed input (e.g. Feb 31).
+// Only an explicit calendar/shortcut selection should replace that raw draft.
+// Its panel is teleported, so scope these capture listeners to this picker.
+const captureDateSelection = (event) => {
+  if (!dialogFormVisible.value || !(event.target instanceof Element)) return
+  const target = event.target.closest('.activity-date-popper .el-date-table td, .activity-date-popper .el-picker-panel__shortcut')
+  if (!target || target.getAttribute('aria-disabled') === 'true' || target.classList.contains('disabled')) return
+  if (event.type === 'keydown' && !['Enter', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) return
+  clearDateInput()
+}
+onMounted(() => {
+  document.addEventListener('click', captureDateSelection, true)
+  document.addEventListener('keydown', captureDateSelection, true)
+})
 
 // 监听弹窗打开时初始化类型和负责人ID
 watch(
   () => dialogFormVisible.value,
-  async (visible) => {
-    if (visible && activityStore.formdateCopy?.activityType?.id) {
-      await nextTick()
-      activityTypeId.value = activityStore.formdateCopy.activityType.id
-      directorId.value = activityStore.formdateCopy.director?.id || null
+  (visible) => {
+    clearDateInput()
+    if (visible) {
+      activityTypeId.value = formdata.value.activityTypeId ?? formdata.value.activityType?.id ?? null
+      directorId.value = formdata.value.dId ?? formdata.value.director?.id ?? null
     }
   },
   { immediate: true, flush: 'post' }
 )
 
-const toSave = () => {
+const toSave = async () => {
+  if (saving.value) return
+  // Let the picker's blur/change handlers finish before taking the draft.
+  await nextTick()
+  const date = dateInput.value === null ? formdata.value.activityDate : dateInput.value.trim()
+  activityStore.saveError = getActivityDateError(date, Number(formdata.value.id) > 0)
+  if (activityStore.saveError) {
+    if (date) activityStore.saveError += `（输入：${date}）`
+    return
+  }
+  // Invalid/disabled typed input may never emit update:modelValue. Validate
+  // the actual typed date so an old model value cannot be silently submitted.
+  activityStore.formdata.activityDate = date
   activityStore.formdata.activityTypeId = activityTypeId.value
   activityStore.formdata.dId = directorId.value
-  activityStore.save()
+  await activityStore.save()
 }
 
 const handleType = () => {
@@ -196,10 +237,9 @@ const beforeAvatarUpload = async (file) => {
 }
 
 const canelDialog = () => {
+  if (saving.value) return
   activityStore.dialogFormVisible = false
-  activityStore.formdata = {}
-  activityStore.formdateCopy.activityType = {}
-  activityStore.formdateCopy.director = {}
+  activityStore.resetEditor()
   activityTypeId.value = null
   directorId.value = null
 }
@@ -208,38 +248,29 @@ const handleClose = () => {
   canelDialog()
 }
 
-// 禁用今天之前的日期
-const hiredateDisabledDate = (time) => time.getTime() < new Date().getTime()
+// Editing also supports correcting historical records. New activities may
+// start today; comparing against the current instant wrongly disables today.
+const hiredateDisabledDate = (time) => isActivityDateDisabled(time, Number(formdata.value.id) > 0)
 // 快捷选项
 const hiredateShortcuts = [
   {
     text: '明天',
-    value: () => {
-      let now = new Date().getTime()
-      now += 86400000
-      return new Date().setTime(now)
-    }
+    value: () => activityDateShortcut(1)
   },
   {
     text: '后天',
-    value: () => {
-      let now = new Date().getTime()
-      now += 86400000 * 2
-      return new Date().setTime(now)
-    }
+    value: () => activityDateShortcut(2)
   },
   {
     text: '7天后',
-    value: () => {
-      let now = new Date().getTime()
-      now += 86400000 * 7
-      return new Date().setTime(now)
-    }
+    value: () => activityDateShortcut(7)
   }
 ]
 
 // 组件卸载时清理状态
 onUnmounted(() => {
+  document.removeEventListener('click', captureDateSelection, true)
+  document.removeEventListener('keydown', captureDateSelection, true)
   if (dialogFormVisible.value) {
     canelDialog()
   }
@@ -247,6 +278,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.save-error {
+  margin-bottom: 16px;
+}
 .avatar-uploader {
   width: 100%;
   display: block;

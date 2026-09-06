@@ -47,19 +47,22 @@
         <!-- 留言列表区域 -->
         <div class="comments-section">
           <div class="section-header">
-            <h2>最新留言</h2>
+            <h2>社区留言</h2>
+            <div class="list-actions">
+            <el-button size="small" :loading="loading" @click="fetchComments">刷新列表</el-button>
             <el-select
               v-model="sortBy"
+              aria-label="留言排序"
               placeholder="排序方式"
               size="small"
               class="sort-select"
-              @change="handleSortChange"
               popper-class="sort-popper"
             >
               <el-option label="最新发布" value="newest" />
               <el-option label="最多回复" value="most_replies" />
               <el-option label="最早发布" value="oldest" />
             </el-select>
+            </div>
           </div>
 
           <!-- 加载骨架屏 -->
@@ -76,7 +79,7 @@
           <!-- 留言列表 -->
           <div v-else class="comments-list">
             <div
-              v-for="comment in comments"
+              v-for="comment in sortedComments"
               :key="comment.id"
               class="comment-item"
               :class="{ 'comment-item-active': activeCommentId === comment.id }"
@@ -99,7 +102,7 @@
                     <div class="user-details">
                       <span class="user-name">{{ comment.userName || '匿名用户' }}</span>
                       <div class="comment-meta">
-                        <span class="comment-time">{{ formatTime(comment.createTime) }}</span>
+                        <time class="comment-time" :datetime="commentDateTime(comment.createTime)" :title="`发布时间（北京时间）：${formatCommentDateTime(comment.createTime)}`">{{ formatCommentTime(comment.createTime) }}</time>
                         <span v-if="comment.replies && comment.replies.length > 0" class="reply-count">
                           <i class="el-icon-chat-dot-round"></i>
                           {{ comment.replies.length }} 条回复
@@ -155,7 +158,7 @@
                         <span class="reply-to-text">回复</span>
                         <span class="reply-target">@{{ reply.replyToUserName || '匿名用户' }}</span>
                       </div>
-                      <span class="reply-time">{{ formatTime(reply.createTime) }}</span>
+                      <time class="reply-time" :datetime="commentDateTime(reply.createTime)" :title="`回复时间（北京时间）：${formatCommentDateTime(reply.createTime)}`">{{ formatCommentTime(reply.createTime) }}</time>
                     </div>
                     <p class="reply-text">{{ reply.content }}</p>
                   </div>
@@ -253,7 +256,7 @@
                   <span class="reply-user-name">{{ reply.userName }}</span>
                 </div>
                 <p class="reply-content-preview">{{ reply.content }}</p>
-                <span class="reply-time">{{ formatTime(reply.createTime) }}</span>
+                <time class="reply-time" :datetime="commentDateTime(reply.createTime)" :title="`回复时间（北京时间）：${formatCommentDateTime(reply.createTime)}`">{{ formatCommentTime(reply.createTime) }}</time>
               </div>
             </div>
           </div>
@@ -267,6 +270,7 @@
 import { ref, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from '@/utils/axios'
+import { commentDateTime, formatCommentDateTime, formatCommentTime, sortComments } from '@/utils/comment-time'
 
 // ------ 响应式数据 ------
 const newComment = ref('')
@@ -281,6 +285,7 @@ const deletingId = ref(null)
 const currentPage = ref(1)
 const total = ref(0)
 const sortBy = ref('newest')
+const sortedComments = computed(() => sortComments(comments.value, sortBy.value))
 
 // 是否无更多数据
 const noMoreData = computed(() => {
@@ -289,22 +294,6 @@ const noMoreData = computed(() => {
 
 // ------ 辅助方法 ------
 const getAvatarUrl = (avatar) => avatar || ''
-
-const formatTime = (time) => {
-  if (!time) return ''
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now - date
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
-  return date.toLocaleDateString()
-}
 
 const isAdmin = () => {
   const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}')
@@ -483,22 +472,6 @@ const clearReply = () => {
   replyContent.value = ''
 }
 
-// 排序
-const handleSortChange = () => {
-  if (sortBy.value === 'newest') {
-    comments.value.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
-  } else if (sortBy.value === 'oldest') {
-    comments.value.sort((a, b) => new Date(a.createTime) - new Date(b.createTime))
-  } else if (sortBy.value === 'most_replies') {
-    comments.value.sort((a, b) => {
-      const aReplies = a.replies ? a.replies.length : 0
-      const bReplies = b.replies ? b.replies.length : 0
-      return bReplies - aReplies
-    })
-  }
-  comments.value = [...comments.value]
-}
-
 // 加载更多 (单页模式实际就是重新获取所有，这里保留方法)
 const loadMore = () => {
   currentPage.value++
@@ -650,6 +623,12 @@ $shadow-lg: var(--sp-shadow-md);
   border-bottom: 1px solid $border-light;
   background: $bg-card;
 
+  .list-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
   h2 {
     font-size: 20px;
     font-weight: 600;
@@ -711,6 +690,7 @@ $shadow-lg: var(--sp-shadow-md);
     }
     .comment-meta {
       display: flex;
+      flex-wrap: wrap;
       gap: 12px;
       font-size: 12px;
       color: $text-secondary;
@@ -762,6 +742,7 @@ $shadow-lg: var(--sp-shadow-md);
     flex: 1;
     .reply-header {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 10px;
       margin-bottom: 8px;
@@ -936,6 +917,11 @@ $shadow-lg: var(--sp-shadow-md);
   }
 }
 @media (max-width: 768px) {
+  .section-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    .list-actions { flex-wrap: wrap; }
+  }
   .forum-home-container {
     padding: 16px;
   }
