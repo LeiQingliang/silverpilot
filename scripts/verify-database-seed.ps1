@@ -81,6 +81,24 @@ try {
 
     $quotedTables = ($requiredTables | ForEach-Object { "'$_'" }) -join ','
     Assert-Scalar 'Required base-table contract' "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND table_name IN ($quotedTables);" '21'
+    $dateColumns = @(Invoke-SchemaSql @'
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA=DATABASE() AND DATA_TYPE IN ('date','datetime','timestamp','year')
+ORDER BY TABLE_NAME, ORDINAL_POSITION;
+'@)
+    if ($dateColumns.Count -eq 0) { throw 'The seed has no date columns to verify.' }
+    $dateYearChecks = foreach ($dateColumn in $dateColumns) {
+        $parts = ([string]$dateColumn).Split("`t")
+        if ($parts.Count -ne 3 -or $parts[0] -notmatch '^[A-Za-z0-9_]+$' -or $parts[1] -notmatch '^[A-Za-z0-9_]+$') {
+            throw 'Unexpected date-column metadata in the disposable schema.'
+        }
+        $tableName = $parts[0]
+        $columnName = $parts[1]
+        $yearExpression = if ($parts[2] -eq 'year') { "``$columnName``" } else { "YEAR(``$columnName``)" }
+        "SELECT COUNT(*) AS invalid_count FROM ``$tableName`` WHERE ``$columnName`` IS NOT NULL AND $yearExpression <> 2027"
+    }
+    Assert-Scalar 'All non-null seed dates use year 2027' `
+        ("SELECT COALESCE(SUM(invalid_count),0) FROM (" + ($dateYearChecks -join ' UNION ALL ') + ") seed_date_years;") '0'
     Assert-Scalar 'Active foreign-key contract' @'
 SELECT COUNT(*) FROM information_schema.table_constraints
 WHERE constraint_schema=DATABASE() AND constraint_type='FOREIGN KEY'
