@@ -5,7 +5,8 @@ target/
 !.env.example
 src/main/resources/application-local.properties
 src/main/resources/application-host.properties
-/config/
+/config/*
+!/config/dependency-check-suppressions.xml
 logs/
 *.log
 !.mvn/wrapper/maven-wrapper.jar

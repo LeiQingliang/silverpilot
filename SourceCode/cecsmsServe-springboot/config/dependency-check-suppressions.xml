@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd
+                                  https://dependency-check.github.io/DependencyCheck/dependency-suppression.1.4.xsd">
+    <suppress until="2026-10-01Z">
+        <notes><![CDATA[
+        CVE-2026-66299 only affects the optional WebSocket chat example shipped with
+        the full Tomcat distribution. Apache states that deployments without the
+        examples web application are not affected. Spring Boot embeds
+        tomcat-embed-core; the resolved 11.0.24 JAR contains no examples or
+        websocket/chat entries. Remove this rule and upgrade to Tomcat 11.0.25 as
+        soon as that currently unreleased version is published. The exact PURL,
+        version, CVE, expiry, and failBuildOnUnusedSuppressionRule prevent this
+        exception from hiding any other Tomcat or dependency finding.
+        Reference: https://tomcat.apache.org/security-11.html#Fixed_in_Apache_Tomcat_11.0.25
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat\.embed/tomcat-embed-core@11\.0\.24$</packageUrl>
+        <cve>CVE-2026-66299</cve>
+    </suppress>
+</suppressions>
