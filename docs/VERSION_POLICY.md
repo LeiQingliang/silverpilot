@@ -1,6 +1,6 @@
 # 版本与长期支持策略
 
-基线日期：2026-08-20（Asia/Shanghai）。本文件把“最新长期稳定版本”转成可执行规则；版本状态会随上游发布变化，因此通过独立维护审计定期重新核验，正常启动不依赖外网或上游当天是否发布了新版本。
+基础运行环境基线日期：2026-08-20；Java 依赖安全补丁核验日期：2026-09-07（Asia/Shanghai）。本文件把“最新长期稳定版本”转成可执行规则；版本状态会随上游发布变化，因此通过独立维护审计定期重新核验，正常启动不依赖外网或上游当天是否发布了新版本。
 
 ## 1. 选版定义
 
@@ -16,10 +16,10 @@
 | 范围 | 当前版本 | 通道与依据 |
 | --- | --- | --- |
 | Java | 25 LTS；本机 Temurin 25.0.4，官方容器 Temurin 25.0.3+9 | Java 25 为 LTS；官方容器尚未发布 25.0.4 精确标签 |
-| Spring Boot | 4.1.0 | 当前 stable；统一管理 Spring 与常用传递依赖 |
+| Spring Boot | 4.1.1 | 当前 stable；统一管理 Spring 与常用传递依赖 |
 | Maven / Wrapper | 3.9.16 / 3.3.4 | Maven 3 最新推荐稳定版；不采用 Maven 4 preview |
 | OWASP Dependency-Check | 13.0.0 | GitHub Releases 最新正式稳定版；拒绝 draft、pre-release 与非稳定 SemVer |
-| Java 安全覆盖 | Tomcat 11.0.24 / Netty 4.2.17.Final / Jackson 2.21.5 / POI 5.5.1 / Commons Compress 1.28.0 / Log4j 2.25.5 | 对 Spring Boot/EasyExcel 传递依赖做有证据的安全补丁覆盖，并通过 84 项测试与离线 SCA |
+| Java 安全覆盖 | Tomcat 11.0.25 / Netty 4.2.17.Final / Jackson 2.21.5 / POI 5.5.1 / Commons Compress 1.28.0 / Log4j 2.25.5 | 对 Spring Boot/EasyExcel 传递依赖做有证据的安全补丁覆盖；当前版本与验证结果见 [Java SCA 记录](JAVA_DEPENDENCY_CHECK.md) |
 | MyBatis-Plus / java-jwt / EasyExcel | 3.5.17 / 4.6.0 / 4.0.3 | Maven 检查确认的最新稳定直接依赖 |
 | MySQL Server | 9.7.2 LTS | 最新 MySQL LTS 线；排除 26.7 Innovation |
 | MySQL Connector/J | 26.7.0 GA | Connector 无 LTS 通道；采用官方 GA 且兼容受支持的 MySQL LTS Server |
@@ -44,7 +44,7 @@
 - 本地混合模式核对宿主机 Java/Javac/JAVA_HOME、Node/npm、Maven Wrapper、完整 npm 依赖树与本机 MySQL；全 Docker 模式核对 Docker Engine/Compose、Dockerfile/Compose 的构建与运行版本，以及相应官方镜像标签，宿主机不需要另装 Java、Node.js、npm、Maven 或 MySQL。
 - Maven Wrapper 固定 Maven 3.9.16；Enforcer 要求 Java `[25,26)` 与 Maven `[3.9.16,4.0.0)`。
 - Dependency-Check 固定 13.0.0；版本门禁查询 GitHub `releases/latest`，CI/Release 缓存同版本漏洞数据库，并由独立脚本执行有界更新与离线扫描。
-- Spring Boot parent 固定 4.1.0；`mysql.version` 明确覆盖到 Connector/J 26.7.0 GA。
+- Spring Boot parent 固定 4.1.1；`mysql.version` 明确覆盖到 Connector/J 26.7.0 GA。
 - 前端通过 `packageManager`、`engines`、`devEngines` 和 `engine-strict=true` 拒绝错误的 Node/npm 主版本；`package-lock.json` 固定精确依赖树。Docker 与 GitHub CI/Release 从 npm 官方 tarball 安装 npm，并先核对 `runtime-versions.json` 中的 SHA-256。
 - ESLint 启用 Vue 3 essential 弃用规则并把警告视为失败；Knip 要求前端无不可达文件、未使用依赖和未使用导出；Element Plus 契约测试阻断已知弃用绑定；`fast-check` 以固定种子和可复现失败路径覆盖五类不可信输入边界。
 - Maven Compiler 将 `unchecked`、`deprecation` 与 `removal` 警告视为失败；根验证脚本使用完整依赖 classpath 执行 JDK 25 `jdeprscan`。

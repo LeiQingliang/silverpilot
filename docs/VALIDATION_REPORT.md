@@ -1,8 +1,12 @@
 # 最终验证与安全扫描报告
 
-验证日期：2026-08-21（Asia/Shanghai）
+基础验收日期：2026-08-21；Java 依赖安全补丁增量核验：2026-09-07（Asia/Shanghai）
 验证范围：`v1.0.1` 基线加当前 `Unreleased` 工作区源码、本地 Docker 镜像、隔离 Compose 运行栈、只读 MCP 与合成演示 MySQL 数据。
 结论边界：以下是一次时间点验收，不是零漏洞、生产 SLA、临床准确率或合规认证声明。
+
+## Java 依赖安全补丁增量核验（2026-09-07）
+
+Spring Boot 4.1.1 统一带入 Spring Framework 7.0.9 / Spring Security 7.1.1，Tomcat 单独覆盖到 11.0.25，旧临时例外已移除。完整项目验证通过后端 88 项、前端 58 项及 5 组属性测试；最终 JAR 的实际版本已核对。强制刷新官方漏洞镜像后的扫描通过：103 个依赖、0 个 CVSS 7.0+ 条目，仍保留 1 个 CVSS 5.5 的 OkHttp 漏洞编号（3 个依赖条目）。验证命令、官方修复依据与剩余边界见 [Java SCA 记录](JAVA_DEPENDENCY_CHECK.md)。
 
 ## 0. 根 image 真实图片与重复启动回归（2026-08-21）
 
@@ -196,7 +200,9 @@ docker scout cves --only-severity critical,high <image>
 
 确认全部容器的实际镜像 ID 后，已逐个删除不再被引用的 `silverpilot-mysql:8.4.11`、`mysql:8.4.11`、`redis:8.2.8-alpine`、`nginx:1.31.3-alpine-slim`、`node:24.18.0-alpine3.23` 与 `alpine:3.23.3`。另一个独立容器 `redis-lts` 仍在使用 `redis:8.2.8`，不属于本项目且不是“未使用镜像”，因此保留，避免越过项目边界破坏其他服务。
 
-### OWASP Java Dependency-Check
+### OWASP Java Dependency-Check（2026-08-20 历史记录）
+
+以下保留历史扫描证据；2026-09-07 已升级至 Spring Boot 4.1.1 / Tomcat 11.0.25 并删除临时例外，当前处置和复扫结果以 [Java SCA 记录](JAVA_DEPENDENCY_CHECK.md) 为准。
 
 2026-08-20 改为 OWASP 维护的 NVD JSON 2.0 镜像、项目级持久 H2 缓存和强制离线扫描。首次冷缓存更新约 1 分 53 秒，后续离线扫描约 10 秒；更新与扫描分别有 15/10 分钟硬超时，缓存必须同时满足固定扫描器版本、168 小时窗口和数据库 SHA-256。CI 与 Release 使用按扫描器版本和 UTC 日期分代的持久缓存，因此不再让 `check` 目标直接等待 NVD REST API。官方版本门禁随后识别出 13.0.0 已成为最新稳定版，扫描器、缓存代际与门禁同步升级；旧 12.2.2 缓存先因版本不匹配被拒绝，再由 13.0.0 在约 28 秒内完成镜像刷新，最终离线扫描约 10 秒且报告结果不变。
 

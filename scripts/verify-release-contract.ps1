@@ -50,17 +50,18 @@ $dependencyCheckContract = [ordered]@{
     'OWASP maintained NVD mirror' = '<dependency-check.nvd-datafeed-url>https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/nvdcve-{0}.json.gz</dependency-check.nvd-datafeed-url>'
     'network-disabled scan default' = '<autoUpdate>false</autoUpdate>'
     'high severity build gate' = '<failBuildOnCVSS>7.0</failBuildOnCVSS>'
-    'expiring exact suppression file' = '<suppressionFile>${dependency-check.suppression-file}</suppressionFile>'
+    'reviewed suppression file' = '<suppressionFile>${dependency-check.suppression-file}</suppressionFile>'
     'unused suppression build gate' = '<failBuildOnUnusedSuppressionRule>true</failBuildOnUnusedSuppressionRule>'
     'explicit opt-in Maven profile' = '<id>dependency-check</id>'
 }
 
 $dependencyCheckSuppressionPath = Join-Path $projectRoot 'SourceCode\cecsmsServe-springboot\config\dependency-check-suppressions.xml'
-$dependencyCheckSuppression = Get-Content -LiteralPath $dependencyCheckSuppressionPath -Raw
-if ($dependencyCheckSuppression -notmatch '<suppress until="2026-10-01Z">' -or
-    $dependencyCheckSuppression -notmatch 'tomcat-embed-core@11\\\.0\\\.24' -or
-    $dependencyCheckSuppression -notmatch '<cve>CVE-2026-66299</cve>') {
-    throw 'The reviewed Tomcat examples-only suppression must remain exact, expiring, and limited to CVE-2026-66299.'
+[xml]$dependencyCheckSuppression = Get-Content -LiteralPath $dependencyCheckSuppressionPath -Raw
+$suppressionRoot = $dependencyCheckSuppression.DocumentElement
+if ($suppressionRoot.LocalName -ne 'suppressions' -or
+    $suppressionRoot.NamespaceURI -ne 'https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd' -or
+    $suppressionRoot.SelectNodes('*').Count -ne 0) {
+    throw 'The patched Java dependency baseline requires an empty project suppression file; review any new exception explicitly.'
 }
 foreach ($entry in $dependencyCheckContract.GetEnumerator()) {
     if (-not $backendPomText.Contains([string]$entry.Value)) {

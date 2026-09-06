@@ -19,7 +19,7 @@
 <p align="center">
   <a href="runtime-versions.json"><img alt="Source baseline 1.0.1 plus Unreleased" src="https://img.shields.io/badge/source-1.0.1%20%2B%20Unreleased-5B5BD6?style=flat-square" /></a>
   <a href="SourceCode/cecsmsServe-springboot/pom.xml"><img alt="Java 25 LTS" src="https://img.shields.io/badge/Java-25%20LTS-ED8B00?style=flat-square&amp;logo=openjdk&amp;logoColor=white" /></a>
-  <a href="SourceCode/cecsmsServe-springboot/pom.xml"><img alt="Spring Boot 4.1.0" src="https://img.shields.io/badge/Spring%20Boot-4.1.0-6DB33F?style=flat-square&amp;logo=springboot&amp;logoColor=white" /></a>
+  <a href="SourceCode/cecsmsServe-springboot/pom.xml"><img alt="Spring Boot 4.1.1" src="https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?style=flat-square&amp;logo=springboot&amp;logoColor=white" /></a>
   <a href="SourceCode/cecsmsui-vue/package.json"><img alt="Vue 3.5.41" src="https://img.shields.io/badge/Vue-3.5.41-42B883?style=flat-square&amp;logo=vuedotjs&amp;logoColor=white" /></a>
 </p>
 
@@ -401,7 +401,7 @@ IDEA profile、VSCode 脚本和故障排查分别见[后端 README](SourceCode/c
 
 | 层 | 当前固定基线 |
 | --- | --- |
-| 后端 | Java 25 LTS、Spring Boot 4.1.0、MyBatis-Plus 3.5.17、Bean Validation、java-jwt 4.6.0、EasyExcel 4.0.3 |
+| 后端 | Java 25 LTS、Spring Boot 4.1.1、MyBatis-Plus 3.5.17、Bean Validation、java-jwt 4.6.0、EasyExcel 4.0.3 |
 | 数据 | MySQL 9.7.2 LTS、Connector/J 26.7.0、Redis 8.2.9 Extended、HikariCP、幂等迁移 |
 | AI | DeepSeek Chat Completions、火山方舟/豆包 Vision、显式 Mock、结构化输出、受控 Markdown RAG |
 | 前端 | Vue 3.5.41、Vue Router 5.2.0、Vite 8.2.1、Element Plus 2.14.4、Pinia 4.0.3、Axios 1.19.0、ECharts 6.1.0 |

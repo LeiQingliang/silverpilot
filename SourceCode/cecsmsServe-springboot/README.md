@@ -6,7 +6,7 @@
 
 文档快照：2026-08-21 已按当前 `pom.xml`、应用配置、Controller/Service、数据库契约健康项和实际本地混合启动结果核对；本次 `mvnw.cmd clean verify` 为 87/87 通过。
 
-版本基线为 Java 25 LTS、Spring Boot 4.1.0、Maven Wrapper 3.9.16 与 MySQL Connector/J 26.7.0 GA。Maven Enforcer 会拒绝非 Java 25 或低于 3.9.16/进入 Maven 4 preview 线的构建环境；Spring Boot BOM 统一管理其传递依赖，避免为了追逐单个更高版本而破坏框架验证过的组合。
+版本基线为 Java 25 LTS、Spring Boot 4.1.1、Maven Wrapper 3.9.16 与 MySQL Connector/J 26.7.0 GA。Maven Enforcer 会拒绝非 Java 25 或低于 3.9.16/进入 Maven 4 preview 线的构建环境；Spring Boot BOM 统一管理其传递依赖，避免为了追逐单个更高版本而破坏框架验证过的组合。
 
 ## 快速定位
 

@@ -20,9 +20,10 @@
 
 ### Fixed
 
+- 修复 GitHub Java SCA 的 18 个 CVSS 7.0+ 失败条目：Spring Boot 升至 4.1.1，统一带入 Spring Framework 7.0.9 / Spring Security 7.1.1；Tomcat 覆盖至 11.0.25，并删除已失效的临时漏洞例外。
 - 修复从仓库根导入 Maven 模块后由 IDEA 启动本地混合模式时，外置 `host` 配置未加载、媒体根误解析到仓库外并触发持久化图片完整性失败的问题。
 - 修复一键启动依赖上游实时版本查询的问题：正常启动改为离线运行兼容性门禁，断网、官方站点故障或上游发布新补丁不再阻断已验证版本；严格最新版本核验保留为显式维护审计。
-- 修复首次 Java SCA 直接等待 NVD REST API 导致的无界超时，并修复扫描实际发现的全部未抑制依赖漏洞。
+- 修复首次 Java SCA 直接等待 NVD REST API 导致的无界超时；当前漏洞处置和复扫边界见 `docs/JAVA_DEPENDENCY_CHECK.md`。
 - 修复 Maven Central 短暂 5xx 会直接中断后端镜像构建的问题，加入不进入运行镜像的 BuildKit Maven 缓存与最多三次有界预取重试。
 - 修复页面入场模糊滤镜可能在低性能设备上残留，以及 Element Plus 描边主按钮在深浅内容区对比度不足的问题。
 - 修复全新 Windows/Docker 环境中缺少卷或镜像时的 PowerShell 原生 stderr 误终止、缺少运行目录、TCP 排除端口未预检等启动问题。
