@@ -39,16 +39,34 @@ Set-Location .\SourceCode\cecsmsServe-springboot
 
 ## 当前漏洞处置
 
-2026-08-20 的冷缓存更新用时约 1 分 53 秒，离线扫描约 10 秒。官方 13.0.0 发布后，旧版本缓存先被版本门禁拒绝，再在约 28 秒内完成同一官方镜像的数据刷新；13.0.0 离线复扫仍约 10 秒。初次扫描真实拦截了 Tomcat 11.0.22、Netty 4.2.15.Final，以及旧 POI、Commons Compress、Jackson 和 Log4j 传递依赖。项目已升级到 Tomcat 11.0.24、Netty 4.2.17.Final、POI 5.5.1、Commons Compress 1.28.0、Jackson 2.21.5 和 Log4j 2.25.5，并移除未使用的 Tomcat WebSocket 运行时。后端 84/84 测试通过后，最终报告为 82 个依赖、0 个受影响依赖、0 个未抑制漏洞。
+2026-09-07 核对 [GitHub 失败报告](https://github.com/LeiQingliang/silverpilot/actions/runs/34062887630)，原依赖树有 18 个 CVSS 7.0+ 条目触发门禁，集中在以下三组依赖。评分来自当次扫描数据，不代表已经确认项目具备每个漏洞的利用条件。
 
-`CVE-2026-66299` 仅影响完整 Tomcat 发行包中的 WebSocket chat 示例；Apache 明确说明未部署 examples 应用的用户不受影响。Spring Boot 的 `tomcat-embed-core` 11.0.24 JAR 已核对为 1,611 个条目、0 个 examples/chat 条目。由于修复版 11.0.25 尚未发布，仓库保留一条仅匹配该精确 PURL/CVE、于 2026-10-01 到期的规则；`failBuildOnUnusedSuppressionRule=true` 会在升级或匹配漂移时阻断构建，不能掩盖其他发现。
+| 依赖 | 原版本 | 修复版本 | 原 CVSS 7.0+ 条目数 |
+| --- | --- | --- | --- |
+| Spring Framework | 7.0.8 | 7.0.9 | 7 |
+| Spring Security | 7.1.0 | 7.1.1 | 2 |
+| Tomcat embed core / EL | 11.0.24 | 11.0.25 | 9（core） |
+
+父项目升级为 [Spring Boot 4.1.1 正式版](https://spring.io/blog/2026/08/20/spring-boot-4-1-1-available-now/)，由其 BOM 统一管理 Spring Framework 与 Spring Security。该 BOM 仍固定 Tomcat 11.0.24，因此保留单独的 `tomcat.version` 安全覆盖，将 core 与 EL 一致升级到 11.0.25。版本已与 Maven Central 的正式发布元数据及最终可执行 JAR 中的实际依赖核对。
+
+官方修复依据：[Spring Framework 公告](https://spring.io/security/cve-2026-59313/)、[Spring Security 公告](https://spring.io/security/cve-2026-59270/)、[Spring Security WebAuthn 公告](https://spring.io/security/cve-2026-47841/)、[Tomcat 11.0.25 安全修复](https://tomcat.apache.org/security-11.html#Fixed_in_Apache_Tomcat_11.0.25)。
+
+Tomcat 11.0.25 同时修复 `CVE-2026-66299`，原来仅针对 11.0.24 examples 的临时例外已删除。共享 suppression 文件保留为空，发布契约拒绝重新加入规则；`failBuildOnCVSS=7.0`、`failOnError=true` 和 `failBuildOnUnusedSuppressionRule=true` 继续启用。
+
+本地 `verify-project.ps1` 已通过后端 88 项、前端 58 项测试、5 组属性测试、静态检查、构建、JDK API 扫描和前端审计。后端包含真实随机端口 Tomcat HTTP 请求，覆盖错误响应和静态资源读取；本次未重新构建或启动 Docker 运行栈。
+
+2026-09-07 以 `invoke-dependency-check.ps1 -Mode All -ForceUpdate` 从官方镜像重新刷新数据库，再执行离线复扫。报告时间为 `2026-09-06T22:19:45Z`（北京时间 2026-09-07），共 103 个依赖、0 个 CVSS 7.0+ 条目，Maven 返回 `BUILD SUCCESS`；Spring 与 Tomcat 原有失败项均不再命中，项目级 suppression 为 0 条。
+
+报告仍保留 `CVE-2023-0833`（CVSS 5.5 / MEDIUM），分别命中 Ark SDK 引入的 `logging-interceptor:2.7.5`、`okhttp:2.7.5` 与 `okhttp3:3.14.9`，即 1 个漏洞编号、3 个依赖条目。它没有被隐藏或新增例外，也不触发既定的 7.0 门禁；Ark SDK / OkHttp 跨版本迁移和该条目的适用性需要另行核查。本次修复的是导致 CI 失败的依赖条目，不将扫描通过描述为“所有漏洞清零”。
+
+2026-08-20 的 82 个依赖、0 个未抑制发现只属于历史扫描快照，不能代替升级后的复扫结果。
 
 ## 边界与维护
 
 - 镜像和 NVD 都是外部数据源；本方案保证等待有上限、扫描可离线复现、失败不伪装成通过，但不承诺第三方永久在线。
 - OWASP 镜像是每日尽力更新，不是实时漏洞情报。CI 每日尝试刷新，最长离线回退窗口为 168 小时。
 - 每次 Dependency-Check 正式版变化都必须同步 `runtime-versions.json`、POM、CI 缓存键，并重新执行完整扫描。
-- Tomcat 11.0.25 正式发布后应立即升级并删除临时 suppression；到期或未使用规则会让门禁失败。
+- 当前没有项目级 suppression。新增例外必须单独评审其适用范围、精确版本、漏洞编号和到期日，并同步发布契约；优先升级到正式修复版。
 - Dependency-Check 是尽力而为的识别工具，0 个发现不等于未来或所有分析器中绝对没有漏洞。
 
 官方依据：[OWASP 数据源与缓存](https://dependency-check.github.io/DependencyCheck/data/index.html)、[NVD 镜像配置](https://dependency-check.github.io/DependencyCheck/data/mirrornvd.html)、[H2 缓存模式](https://dependency-check.github.io/DependencyCheck/data/cacheh2.html)、[suppression 规则](https://dependency-check.github.io/DependencyCheck/general/suppression.html)、[Tomcat 11 安全公告](https://tomcat.apache.org/security-11.html)。

@@ -20,7 +20,7 @@ IDEA + VSCode 是唯一支持的本地应用进程入口：IDEA 独占 Java/`808
 
 `backend` 和 `frontend` 位于 `full` profile。Compose 使用健康条件确保数据库/Redis 健康后再启动后端、后端健康后再启动前端，符合 Docker 官方关于 [Compose 启动顺序](https://docs.docker.com/compose/how-tos/startup-order/) 的机制。新上传内容写入 `silverpilot-uploads`；项目根 `image/file/video` 只读挂载到 `/app/repository-media`。启动前会校验种子引用，后端启动时会迁移旧占位 URL 并核对全部持久化图片，启动后还会逐一通过前端代理读取图片。
 
-当前可复现基线为 Spring Boot 4.1.0、Maven 3.9.16、MySQL 9.7.2 LTS、Connector/J 26.7.0 GA、Redis 8.2.9 Extended、Node.js 24.19.0 LTS、npm 12.0.2、Go 1.27.0、Nginx 1.30.4 stable、Ubuntu 26.04 LTS 与 Alpine 3.24.1。Redis 官方镜像仓库在本次验收时尚未提供 `8.2.9` 标签，因此 `redis/Dockerfile` 从 Redis 官方发布地址下载源码，并用官方 `redis-hashes` 中的 SHA-256 固定校验；它只构建本项目实际需要的 Redis Core，不冒充 Redis Stack 模块镜像。完整选版规则和升级门禁见 [版本与长期支持策略](VERSION_POLICY.md)。
+当前可复现基线为 Spring Boot 4.1.1、Maven 3.9.16、MySQL 9.7.2 LTS、Connector/J 26.7.0 GA、Redis 8.2.9 Extended、Node.js 24.19.0 LTS、npm 12.0.2、Go 1.27.0、Nginx 1.30.4 stable、Ubuntu 26.04 LTS 与 Alpine 3.24.1。Redis 官方镜像仓库在本次验收时尚未提供 `8.2.9` 标签，因此 `redis/Dockerfile` 从 Redis 官方发布地址下载源码，并用官方 `redis-hashes` 中的 SHA-256 固定校验；它只构建本项目实际需要的 Redis Core，不冒充 Redis Stack 模块镜像。完整选版规则和升级门禁见 [版本与长期支持策略](VERSION_POLICY.md)。
 
 启动预检同时检查监听进程与 Windows TCP 排除端口范围；默认端口落入系统保留范围时会在构建前报告具体范围，使用者应在被忽略的 `.env.docker` 中选择空闲端口，而不是结束无关进程。本次本机验收因 `3307-3406` 被系统排除，隔离栈使用 `127.0.0.1:13307` 映射 MySQL。
 

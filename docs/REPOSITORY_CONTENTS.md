@@ -9,7 +9,7 @@
 | `image/` | 全部 202 个图片文件，即 101 张原图及 101 张 WebP；种子使用其中 48 组 |
 | `file/文档/` | 全部 27 份原始文档，包括 10 份 DOCX 和 17 份 PDF |
 | `video/.gitkeep` | 保留当前为空的视频资源目录 |
-| `SourceCode/cecsmsServe-springboot/config/dependency-check-suppressions.xml` | Maven 引用的现有、有到期时间的漏洞例外配置；完整保留原文件内容，未新增或扩大例外 |
+| `SourceCode/cecsmsServe-springboot/config/dependency-check-suppressions.xml` | Maven 引用的共享扫描配置；后续安全升级已移除旧 Tomcat 临时例外，当前为空，详见 [Java SCA 记录](JAVA_DEPENDENCY_CHECK.md) |
 
 图片和文档按照原始路径及字节内容提交，以便 Git 检出后恢复完整项目资源。中文文件名也纳入发布检查。现有源码、文档、界面验证资料和 `.codebuddy` 项目技能继续随仓库跟踪。
 
