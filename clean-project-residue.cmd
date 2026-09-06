@@ -5,6 +5,8 @@ cd /d "%~dp0"
 rem Standalone SilverPilot runtime cleaner. The PowerShell payload is embedded
 rem below so this file does not depend on any script under scripts\.
 set "SILVERPILOT_CLEANUP_SELF=%~f0"
+set "SILVERPILOT_CLEANUP_STOP_RUNNING=0"
+if /I "%~1"=="--stop-running" set "SILVERPILOT_CLEANUP_STOP_RUNNING=1"
 
 where pwsh.exe >nul 2>&1
 if errorlevel 1 goto use_windows_powershell
@@ -38,6 +40,8 @@ $backendRoot = Join-Path $projectRoot 'SourceCode\cecsmsServe-springboot'
 $frontendRoot = Join-Path $projectRoot 'SourceCode\cecsmsui-vue'
 $environmentFile = Join-Path $projectRoot '.env.docker'
 $dryRun = $env:SILVERPILOT_CLEANUP_DRY_RUN -eq '1'
+$stopRunning = $env:SILVERPILOT_CLEANUP_STOP_RUNNING -eq '1'
+$lifecycleLock = $null
 $failures = [System.Collections.Generic.List[string]]::new()
 $knownServices = @('frontend', 'backend', 'redis', 'mysql')
 
@@ -47,6 +51,27 @@ function Write-Info([string]$Message) {
 
 function Write-Pass([string]$Message) {
     Write-Host "[PASS] $Message" -ForegroundColor Green
+}
+
+# Share the startup/shutdown mutex without adding an external script dependency.
+function Enter-CleanupLifecycleLock {
+    $identity = $projectRoot.TrimEnd('\', '/').ToUpperInvariant()
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $digest = [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($identity))).Replace('-', '')
+    } finally { $sha.Dispose() }
+    $mutex = New-Object Threading.Mutex($false, "Local\SilverPilot-Lifecycle-$digest")
+    try {
+        $acquired = $false
+        try { $acquired = $mutex.WaitOne(0) }
+        catch [Threading.AbandonedMutexException] { $acquired = $true }
+        if ($acquired) { return $mutex }
+        $mutex.Dispose()
+        return $null
+    } catch {
+        $mutex.Dispose()
+        throw
+    }
 }
 
 function Add-Failure([string]$Message) {
@@ -410,6 +435,9 @@ function Stop-ProjectProcesses {
         Write-Pass 'No project-owned Java, Vite, or dedicated launcher process is running.'
         return
     }
+    if (-not $stopRunning) {
+        throw 'Project processes became active during cleanup. They were preserved; stop them explicitly before retrying.'
+    }
     foreach ($target in $targets) {
         if ($dryRun) {
             Write-Info "Dry run: would stop $($target.Role) $($target.Name) PID $($target.ProcessId)."
@@ -455,9 +483,7 @@ function Get-ProjectContainers {
                 break
             }
         }
-        $matchesProject = (Test-SamePath $workingDirectory $projectRoot) -or
-            $sameConfiguration -or
-            ($projectName -eq $composeProjectName -and $serviceName -in $knownServices)
+        $matchesProject = (Test-SamePath $workingDirectory $projectRoot) -and $sameConfiguration
         if (-not $matchesProject) { continue }
         $matches += [pscustomobject]@{
             Id = [string]$container[0].Id
@@ -482,6 +508,9 @@ function Stop-ProjectContainers {
         return
     }
     foreach ($container in $containers) {
+        if (-not $stopRunning -and $container.State -notin @('exited', 'created', 'dead')) {
+            throw "Container $($container.Name) became active during cleanup. It was preserved; use stop-project.cmd to stop it."
+        }
         if ($dryRun) {
             Write-Info "Dry run: would stop and remove container $($container.Name) [$($container.Service), $($container.State)]."
             continue
@@ -608,18 +637,44 @@ try {
     }
 
     Write-Host ''
-    Write-Host 'SilverPilot complete runtime cleanup' -ForegroundColor White
+    $lifecycleLock = Enter-CleanupLifecycleLock
+    if ($null -eq $lifecycleLock) {
+        Write-Host '[SKIPPED] Startup, mode switch, shutdown, or cleanup is in progress. Running services and startup processes were preserved.' -ForegroundColor Yellow
+        exit 0
+    }
+
+    Write-Host 'SilverPilot runtime residue cleanup' -ForegroundColor White
     Write-Host "Project: $projectRoot"
     if ($dryRun) {
         Write-Host '[DRY RUN] Nothing will be stopped or deleted.' -ForegroundColor Yellow
     } else {
-        Write-Host '[SCOPE] Stops only verified project processes/containers and clears generated runtime state.' -ForegroundColor Cyan
+        if ($stopRunning) {
+            Write-Host '[SCOPE] Explicit --stop-running: stops verified project processes/containers and clears generated runtime state.' -ForegroundColor Cyan
+        } else {
+            Write-Host '[SCOPE] Cleans stopped runtime residue. Active services and startup processes are preserved.' -ForegroundColor Cyan
+        }
         Write-Host '[PRESERVED] IDEA, VSCode, MySQL 3306, Redis 6379, source, dependencies, uploads, images, Docker images, and named data volumes.' -ForegroundColor Cyan
     }
 
-    try { Stop-ProjectProcesses } catch { Add-Failure "Local process cleanup: $($_.Exception.Message)" }
-    try { Stop-ProjectContainers } catch { Add-Failure "Docker cleanup: $($_.Exception.Message)" }
-    try { Remove-RuntimeArtifacts } catch { Add-Failure "Runtime artifact cleanup: $($_.Exception.Message)" }
+    # Check before any process termination or artifact deletion. Starting Docker
+    # can revive restartable containers, so discovery must follow engine readiness.
+    Ensure-DockerReady
+    if (-not $stopRunning) {
+        $activeProcesses = @(Get-ProjectProcessTargets)
+        $activeContainers = @(Get-ProjectContainers | Where-Object { $_.State -notin @('exited', 'created', 'dead') })
+        if ($activeProcesses.Count -gt 0 -or $activeContainers.Count -gt 0) {
+            $activeNames = @($activeContainers | ForEach-Object { "$($_.Name) ($($_.State))" }) +
+                @($activeProcesses | ForEach-Object { "$($_.Name) PID $($_.ProcessId)" })
+            Write-Host "[RUNNING] $($activeNames -join ', ')" -ForegroundColor Green
+            Write-Host '[SKIPPED] Active runtime is not residue. Services, logs, caches, and build state were preserved.' -ForegroundColor Green
+            Write-Host '[STOP] Use stop-project.cmd for Docker shutdown. Use clean-project-residue.cmd --stop-running only for an explicit complete cleanup.' -ForegroundColor Cyan
+            exit 0
+        }
+    }
+
+    Stop-ProjectProcesses
+    Stop-ProjectContainers
+    Remove-RuntimeArtifacts
 
     if ($dryRun) {
         Write-Pass 'Dry-run discovery completed; no state was changed.'
@@ -640,4 +695,8 @@ try {
     Write-Host "[FAILED] $($_.Exception.Message)" -ForegroundColor Red
     Write-Host '[SAFETY] An unrecognized port owner is never force-killed. Close the reported application/service, then run this file again.' -ForegroundColor Yellow
     exit 1
+} finally {
+    if ($null -ne $lifecycleLock) {
+        try { $lifecycleLock.ReleaseMutex() } finally { $lifecycleLock.Dispose() }
+    }
 }

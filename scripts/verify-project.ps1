@@ -23,6 +23,10 @@ Write-Host "[PASS] PowerShell syntax validation passed for $($scriptFiles.Count)
 
 & (Join-Path $PSScriptRoot 'verify-ide-separation.ps1')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& (Join-Path $PSScriptRoot 'verify-startup-lifecycle.ps1')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& (Join-Path $PSScriptRoot 'verify-residue-cleanup.ps1')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & (Join-Path $PSScriptRoot 'validate-seed-assets.ps1')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & (Join-Path $PSScriptRoot 'validate-knowledge-base.ps1')

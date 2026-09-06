@@ -751,6 +751,9 @@ function Start-RedisForHostMode {
     throw "Docker Redis did not recover after two bounded attempts. Named data volumes were preserved. Last failure: $lastFailure"
 }
 
+. (Join-Path $PSScriptRoot 'project-lifecycle.ps1')
+$lifecycleLock = Enter-ProjectLifecycleLock $projectRoot
+try {
 Ensure-DockerReady
 if ($Action -in @('up', 'dev', 'redis', 'full', 'restart')) {
     $versionMode = if ($Action -in @('full', 'restart')) { 'Docker' } else { 'Local' }
@@ -850,4 +853,7 @@ switch ($Action) {
         Invoke-Compose @('--profile', 'full', 'down', '--volumes', '--remove-orphans')
         Write-Host '[WARN] SilverPilot containers and named volumes were removed. This cannot be undone.' -ForegroundColor Yellow
     }
+}
+} finally {
+    Exit-ProjectLifecycleLock $lifecycleLock
 }

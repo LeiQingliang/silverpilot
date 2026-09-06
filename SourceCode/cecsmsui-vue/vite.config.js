@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
       port: 8081,
       strictPort: true,
       host: '127.0.0.1',
-      open: '/login',
+      open: process.env.SILVERPILOT_SKIP_BROWSER === '1' ? false : '/login',
       headers: { 'X-SilverPilot-Dev-Server': 'cecsmsui-v1' },
       proxy: createBackendProxy()
     },

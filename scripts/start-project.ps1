@@ -3,6 +3,7 @@ param(
     [string]$Mode = 'Choose',
     [switch]$OpenBrowser,
     [switch]$WaitForStop,
+    [switch]$KeepConsoleOpen,
     [switch]$Rebuild,
     [switch]$FullAudit,
     [ValidateRange(60, 900)]
@@ -134,36 +135,46 @@ if ($Mode -eq 'Local') {
     }
 }
 
-$dockerAttempted = $false
-$dockerRunning = $false
 try {
-    $dockerAttempted = $true
     # Keep streamed Docker/Compose output out of the browser target. Native
     # commands write success-stream records, so assigning this function call
     # would collect those records together with any returned value as Object[].
     Start-DockerMode
     [string]$loginUrl = "http://127.0.0.1:$(Get-ConfiguredDockerFrontendPort)/login"
-    $dockerRunning = $true
-    if ($OpenBrowser) { Start-Process -FilePath $loginUrl | Out-Null }
+    if ($OpenBrowser) {
+        try {
+            Start-Process -FilePath $loginUrl | Out-Null
+        } catch {
+            Write-Warning "Services are ready, but the browser could not be opened. Open $loginUrl manually. $($_.Exception.Message)"
+        }
+    }
     Write-Host "[READY] SilverPilot Docker mode is fully operational: $loginUrl" -ForegroundColor Green
 
     if ($WaitForStop) {
-        try {
-            [void](Read-Host '项目正在运行。完成使用后按 Enter 停止 Docker 服务')
-        } finally {
+        $stopChoice = Read-Host '项目已在后台运行。输入 STOP 停止服务；直接回车退出窗口并保持运行'
+        if ([string]$stopChoice -ieq 'STOP') {
             Invoke-DockerCleanup
-            $dockerRunning = $false
+        } else {
+            Write-Host '[RUNNING] Services remain running in Docker. Use .\stop-project.cmd to stop them.' -ForegroundColor Green
         }
     } else {
+        Write-Host '[RUNNING] You can close this startup window; services will keep running in Docker.' -ForegroundColor Green
         Write-Host '[STOP] Run .\stop-project.cmd when finished. IDEA and VSCode processes are never managed by this command.' -ForegroundColor Cyan
+        if ($KeepConsoleOpen) {
+            try {
+                [void](Read-Host '启动已完成，服务正在 Docker 后台运行。按回车关闭本窗口，服务继续运行')
+            } catch {
+                Write-Host '[RUNNING] Console input is unavailable. Services remain running in Docker.' -ForegroundColor Green
+            }
+        }
     }
     exit 0
 } catch {
     $startupError = $_.Exception.Message
-    if ($dockerAttempted) {
-        try { Invoke-DockerCleanup } catch { $startupError += " Cleanup also failed: $($_.Exception.Message)" }
-    }
+    # A failed retry, readiness check, or console action must not tear down an
+    # already running stack. docker-dev retains diagnostics and data for retry.
     Write-Host "[FAIL] SilverPilot Docker mode did not pass its startup gate: $startupError" -ForegroundColor Red
+    Write-Host '[INFO] Existing containers and data were retained. Use .\stop-project.cmd for an explicit stop.' -ForegroundColor Cyan
     Write-Host "[NEXT] Stop IDEA/VSCode listeners if they occupy Docker ports, then run '.\scripts\docker-dev.ps1 doctor' and '.\scripts\docker-dev.ps1 logs'." -ForegroundColor Yellow
     exit 1
 }
