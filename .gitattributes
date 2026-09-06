@@ -8,3 +8,5 @@ mvnw text eol=lf
 *.jpeg binary
 *.webp binary
 *.ico binary
+*.pdf binary
+*.docx binary
