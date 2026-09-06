@@ -125,6 +125,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import axios from '@/utils/axios'
+import { formatCommentDateTime as formatTime } from '@/utils/comment-time'
 
 const props = defineProps({
   modelValue: {
@@ -146,19 +147,6 @@ const dialogVisible = computed({
 
 const parentComment = ref(null)
 const replies = ref([])
-
-const formatTime = (time) => {
-  if (!time) return ''
-  const date = new Date(time)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-}
 
 // 获取父留言或回复列表
 const fetchRelatedComments = async () => {

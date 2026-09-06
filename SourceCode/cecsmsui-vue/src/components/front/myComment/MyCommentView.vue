@@ -197,6 +197,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import axios from '@/utils/axios'
+import { formatCommentTime as formatTime, sortComments } from '@/utils/comment-time'
 
 const router = useRouter()
 
@@ -231,22 +232,6 @@ const myReplies = computed(() => {
 })
 
 // 方法
-const formatTime = (time) => {
-  if (!time) return ''
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now - date
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
 // 获取留言列表
 const fetchComments = async () => {
   loading.value = true
@@ -265,8 +250,11 @@ const fetchComments = async () => {
       }
 
       // 分离留言和回复
-      allComments.value = commentsData.filter(comment => !comment.parentId)
-      allReplies.value = commentsData.filter(comment => comment.parentId)
+      allComments.value = sortComments(commentsData.filter(comment => !comment.parentId))
+      // /comment/list nests replies under their parent; include those records
+      // before applying the current user's filter and chronological ordering.
+      const replies = commentsData.flatMap(comment => comment.parentId ? [comment] : comment.replies || [])
+      allReplies.value = sortComments([...new Map(replies.map(reply => [reply.id, reply])).values()])
 
 
     } else {
