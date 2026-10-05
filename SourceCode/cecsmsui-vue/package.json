@@ -22,7 +22,7 @@
     "@fontsource/inter": "^5.3.0",
     "@fontsource/playfair-display": "^5.3.0",
     "@lucide/vue": "^1.33.0",
-    "axios": "^1.19.0",
+    "axios": "^1.20.0",
     "echarts": "^6.1.0",
     "element-plus": "^2.14.4",
     "pinia": "^4.0.3",
