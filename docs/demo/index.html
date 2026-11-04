@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="在线观看 SilverPilot 完整项目演示录屏，选择高清画质和最高 16 倍速播放。">
+  <title>项目演示 · SilverPilot</title>
+  <style>
+    :root{font-family:Inter,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:#edf2fa;background:#0b1120;font-synthesis:none;--muted:#a8b5cb;--line:#26354e;--accent:#86e3d5}
+    *{box-sizing:border-box}body{margin:0;min-width:280px;background:radial-gradient(ellipse at 15% 0,rgba(41,90,117,.19),transparent 45%),#0b1120}a{color:var(--accent);text-underline-offset:4px}a:hover{color:#c3fff4}button,select{font:inherit}button,select,a{-webkit-tap-highlight-color:transparent}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:4px}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}
+    .wrap{width:min(1220px,calc(100% - 64px));margin:0 auto}.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:28px 0;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;font-size:20px;font-weight:700;letter-spacing:-.6px}.mark{display:grid;place-items:center;width:32px;height:32px;background:var(--accent);color:#0b2531;border-radius:9px;font-size:20px}.back{font-size:14px;text-decoration:none;color:var(--muted)}main{padding:46px 0 28px}.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px}.eyebrow{margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--accent)}h1{margin:0;font-size:clamp(28px,4vw,42px);line-height:1.2;letter-spacing:-1px}.subtitle{margin:14px 0 0;color:var(--muted);font-size:15px;line-height:1.7}.badge{flex-shrink:0;border:1px solid #32584f;background:#132f30;border-radius:999px;padding:8px 12px;color:#b6f5e6;font-size:13px;font-weight:600;white-space:nowrap}
+    .player-card{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#111c2d;box-shadow:0 24px 70px #0003}.screen{background:#03070f;position:relative}video{width:100%;aspect-ratio:2560/1528;display:block;object-fit:contain;background:#03070f;max-height:75vh}.screen:fullscreen{display:grid;align-items:center;background:#000}.screen:fullscreen video{max-height:100vh;height:100vh}.toolbar{padding:19px 22px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px;border-top:1px solid var(--line)}.settings,.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.field{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted)}select{border:1px solid #394862;background:#19263a;color:#f4f7fc;border-radius:8px;padding:9px 30px 9px 11px;min-height:40px;cursor:pointer;max-width:100%}.action{background:#19263a;border:1px solid #394862;color:#e7edf7;border-radius:8px;padding:9px 12px;min-height:40px;font-size:13px}.action:hover:not(:disabled){background:#24354d}.readout{padding:0 22px 19px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:9px 20px;color:var(--muted);font-size:13px;line-height:1.6}.readout strong{font-weight:600;color:#e2e9f4}.status{margin:0;color:var(--muted)}.status.error{color:#ffbaab}.footnotes{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:22px 2px 0}.hint{font-size:13px;color:var(--muted);line-height:1.8;margin:0;max-width:680px}.downloads{display:flex;gap:18px;flex-shrink:0;padding-top:3px;font-size:13px}.downloads a{text-decoration:none}.credits{margin:42px 0 0;padding-top:22px;border-top:1px solid var(--line);color:#7f90aa;font-size:12px;line-height:1.7}.nojs{padding:16px 22px;color:#ffcfb7;font-size:14px;line-height:1.7}
+    .toolbar[hidden],.readout[hidden]{display:none}
+    @media(max-width:700px){.wrap{width:calc(100% - 32px)}.topbar{padding:20px 0}.brand{font-size:18px}.back{font-size:12px}main{padding-top:32px}.intro{display:block;margin-bottom:20px}.badge{display:inline-flex;margin-top:16px}.subtitle{font-size:14px}.player-card{border-radius:12px}.toolbar{padding:15px;gap:14px}.settings{width:100%;gap:12px;justify-content:space-between}.field{gap:7px}.actions{width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.action{padding:9px 7px}.readout{padding:0 15px 16px;display:block}.readout>span{display:block;margin-top:6px}.footnotes{display:block;padding-top:17px}.downloads{padding-top:16px;flex-wrap:wrap;gap:14px 22px}.credits{margin-top:28px}video{max-height:none}}
+    @media(prefers-reduced-motion:no-preference){button,a,select{transition:background .15s ease,color .15s ease}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="https://github.com/LeiQingliang/silverpilot" aria-label="SilverPilot GitHub 项目"><span class="mark" aria-hidden="true">S</span>SilverPilot</a>
+      <a class="back" href="https://github.com/LeiQingliang/silverpilot#在线演示">返回项目 README ↗</a>
+    </header>
+    <main>
+      <div class="intro">
+        <div><p class="eyebrow">SILVERPILOT · DEMO</p><h1>项目演示</h1><p class="subtitle">完整录屏 · 13 分 32 秒<br>查看操作细节，或以高倍速快速浏览全程。</p></div>
+        <span class="badge" id="default-badge">默认使用最高支持倍速</span>
+      </div>
+      <section class="player-card" aria-label="项目演示播放器">
+        <div class="screen" id="screen">
+          <video id="video" controls playsinline preload="metadata" src="media/silverpilot-demo-original.mp4" aria-label="SilverPilot 完整项目演示录屏">
+            你的浏览器无法播放此视频，请<a href="https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4">下载原始录屏</a>后观看。
+          </video>
+        </div>
+        <noscript><div class="nojs">当前未启用 JavaScript。可使用视频自带控件观看；自定义倍速和画质切换需要启用 JavaScript。</div></noscript>
+        <div class="toolbar" id="toolbar" hidden>
+          <div class="settings">
+            <label class="field" for="quality">画质<select id="quality"><option value="hd">高清原画</option><option value="lite">流畅</option></select></label>
+            <label class="field" for="speed">倍速<select id="speed" aria-describedby="speed-note"></select></label>
+          </div>
+          <div class="actions">
+            <button class="action" type="button" id="backward" disabled aria-label="后退 10 秒">↶ 10 秒</button>
+            <button class="action" type="button" id="forward" disabled aria-label="前进 10 秒">10 秒 ↷</button>
+            <button class="action" type="button" id="fullscreen">全屏观看</button>
+          </div>
+        </div>
+        <div class="readout" id="readout" hidden>
+          <p class="status" id="status" role="status" aria-live="polite">正在读取视频…</p>
+          <span id="speed-summary">正在检测设备支持的倍速…</span>
+        </div>
+      </section>
+      <div class="footnotes">
+        <p class="hint" id="speed-note">默认高清画质、最高支持倍速。阅读界面文字时可暂停或调低倍速；高倍速下，部分浏览器会自动静音，流畅程度取决于设备性能和网络。点击播放器开始观看。</p>
+        <div class="downloads"><a id="direct-link" href="media/silverpilot-demo-original.mp4" target="_blank" rel="noopener">单独打开视频 ↗</a><a href="https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4">下载原始录屏 ↓</a></div>
+      </div>
+      <p class="credits">录屏展示录制时的项目状态。当前功能和运行方式请参阅项目 README。视频公开托管于 GitHub，加载速度取决于当前网络环境。</p>
+    </main>
+  </div>
+  <script>
+    (() => {
+      'use strict';
+      const sources = { hd: 'media/silverpilot-demo-original.mp4', lite: 'media/silverpilot-demo.mp4' };
+      const video = document.getElementById('video');
+      const quality = document.getElementById('quality');
+      const speed = document.getElementById('speed');
+      const status = document.getElementById('status');
+      const summary = document.getElementById('speed-summary');
+      const backward = document.getElementById('backward');
+      const forward = document.getElementById('forward');
+      const fullscreen = document.getElementById('fullscreen');
+      const screen = document.getElementById('screen');
+      const requestedRates = [0.5, 1, 1.5, 2, 4, 8, 16];
+      const supportedRates = requestedRates.filter(rate => {
+        try { video.playbackRate = rate; return video.playbackRate === rate; } catch { return false; }
+      });
+      if (!supportedRates.includes(1)) supportedRates.push(1);
+      supportedRates.sort((a, b) => a - b);
+      const maximumRate = supportedRates[supportedRates.length - 1];
+      let preferredRate = maximumRate;
+      let generation = 0;
+      let pendingSnapshot = null;
+      let cancelSourceListener = () => {};
+      let duration = 812.4;
+      let hasMetadata = false;
+
+      function setStatus(message, error = false) {
+        status.textContent = message;
+        status.classList.toggle('error', error);
+      }
+      function rateText(rate) { return `${rate}×`; }
+      function updateSpeedSummary() {
+        const seconds = duration / preferredRate;
+        const time = seconds < 60 ? `约 ${seconds.toFixed(1)} 秒` : `约 ${Math.floor(seconds / 60)} 分 ${Math.round(seconds % 60)} 秒`;
+        summary.textContent = `${rateText(preferredRate)} · 按设定倍速${time}（不含缓冲）`;
+        speed.value = String(preferredRate);
+      }
+      function applyRate(rate) {
+        try {
+          if (video.defaultPlaybackRate !== rate) video.defaultPlaybackRate = rate;
+          if (video.playbackRate !== rate) video.playbackRate = rate;
+          if (video.playbackRate !== rate) throw new Error('Unsupported playback rate');
+          preferredRate = rate;
+        } catch {
+          preferredRate = video.playbackRate > 0 ? video.playbackRate : 1;
+          setStatus('此设备未能使用所选倍速，已保留可用速度。', true);
+        }
+        updateSpeedSummary();
+      }
+      for (const rate of supportedRates) {
+        const option = document.createElement('option');
+        option.value = String(rate);
+        option.textContent = `${rateText(rate)}${rate === maximumRate ? ' · 最高' : ''}`;
+        speed.appendChild(option);
+      }
+      applyRate(maximumRate);
+      document.getElementById('default-badge').textContent = `默认 ${rateText(maximumRate)} · 最高可选档位`;
+      document.getElementById('toolbar').hidden = false;
+      document.getElementById('readout').hidden = false;
+      if (!sources.lite || sources.lite.startsWith('__')) {
+        quality.querySelector('[value="lite"]').disabled = true;
+      }
+
+      function metadataReady() {
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+          duration = video.duration;
+          hasMetadata = true;
+          backward.disabled = forward.disabled = Boolean(pendingSnapshot);
+          updateSpeedSummary();
+          setStatus(`${quality.value === 'hd' ? '高清原画' : '流畅'} · ${video.videoWidth} × ${video.videoHeight} · 点击播放`);
+        }
+      }
+      video.addEventListener('loadedmetadata', metadataReady);
+      if (video.readyState >= 1) metadataReady();
+      video.addEventListener('play', () => setStatus(`${quality.value === 'hd' ? '高清原画' : '流畅'} · 正在播放`));
+      video.addEventListener('pause', () => { if (hasMetadata && !pendingSnapshot && !video.ended) setStatus('已暂停'); });
+      video.addEventListener('ended', () => setStatus('已播放完毕，可从头再次观看。'));
+      video.addEventListener('waiting', () => { if (!video.paused) setStatus('正在缓冲，可切换流畅画质或调低倍速。'); });
+      video.addEventListener('playing', () => setStatus(`${quality.value === 'hd' ? '高清原画' : '流畅'} · 正在播放`));
+      video.addEventListener('error', () => {
+        if (!video.error) return;
+        setStatus('视频暂时无法加载，请检查网络，或使用下方链接单独打开 / 下载。', true);
+      });
+      video.addEventListener('ratechange', () => {
+        if (pendingSnapshot || !Number.isFinite(video.playbackRate) || video.playbackRate <= 0) return;
+        preferredRate = video.playbackRate;
+        if (![...speed.options].some(o => Number(o.value) === preferredRate)) {
+          const option = document.createElement('option');
+          option.value = String(preferredRate);
+          option.textContent = rateText(preferredRate);
+          speed.appendChild(option);
+        }
+        updateSpeedSummary();
+      });
+      speed.addEventListener('change', () => applyRate(Number(speed.value)));
+      quality.addEventListener('change', () => {
+        const url = sources[quality.value];
+        if (!url || url.startsWith('__')) return;
+        const revision = ++generation;
+        const snapshot = pendingSnapshot || { time: video.currentTime || 0, playing: !video.paused && !video.ended };
+        pendingSnapshot = snapshot;
+        cancelSourceListener();
+        backward.disabled = forward.disabled = true;
+        hasMetadata = false;
+        setStatus('正在切换画质…');
+        const expectedSource = new URL(url, document.baseURI).href;
+        let targetTime = 0;
+        let seekRetries = 0;
+        const isCurrentSource = () => revision === generation && video.currentSrc === expectedSource;
+        const finish = () => {
+          if (!isCurrentSource()) return;
+          cancelSourceListener();
+          pendingSnapshot = null;
+          backward.disabled = forward.disabled = false;
+          if (snapshot.playing) video.play().catch(error => {
+            if (revision === generation && error.name !== 'AbortError') setStatus('画质已切换，请点击播放继续。');
+          });
+          else setStatus('画质已切换 · 已暂停');
+        };
+        const afterSeek = () => {
+          if (!isCurrentSource()) return;
+          // Some media engines discard their first seek immediately after a source change.
+          if (Math.abs(video.currentTime - targetTime) > 0.5 && seekRetries++ < 1) {
+            video.currentTime = targetTime;
+            return;
+          }
+          finish();
+        };
+        const restore = () => {
+          if (!isCurrentSource() || video.readyState < 3) return;
+          video.removeEventListener('canplay', restore);
+          applyRate(preferredRate);
+          targetTime = Number.isFinite(video.duration) ? Math.min(snapshot.time, Math.max(0, video.duration - 0.05)) : 0;
+          if (Math.abs(video.currentTime - targetTime) <= 0.1) finish();
+          else {
+            video.addEventListener('seeked', afterSeek);
+            video.currentTime = targetTime;
+          }
+        };
+        cancelSourceListener = () => {
+          video.removeEventListener('canplay', restore);
+          video.removeEventListener('seeked', afterSeek);
+        };
+        video.addEventListener('canplay', restore);
+        video.src = url;
+        video.load();
+        applyRate(preferredRate);
+        document.getElementById('direct-link').href = url;
+      });
+      function seek(delta) {
+        if (!hasMetadata || !Number.isFinite(video.duration)) return;
+        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + delta));
+      }
+      backward.addEventListener('click', () => seek(-10));
+      forward.addEventListener('click', () => seek(10));
+      fullscreen.addEventListener('click', async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else if (screen.requestFullscreen) await screen.requestFullscreen();
+          else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+          else setStatus('请使用播放器自带的全屏按钮。');
+        } catch { setStatus('请使用播放器自带的全屏按钮。'); }
+      });
+      document.addEventListener('fullscreenchange', () => { fullscreen.textContent = document.fullscreenElement ? '退出全屏' : '全屏观看'; });
+    })();
+  </script>
+</body>
+</html>
+

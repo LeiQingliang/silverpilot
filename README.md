@@ -39,6 +39,7 @@
 <p align="center"><sub>当前工作区 · 全 Docker 无缓存重建 · Microsoft Edge · 1440 × 1000 · 2026-08-21 02:02 CST</sub></p>
 
 <p align="center">
+  <a href="#在线演示">在线演示</a> ·
   <a href="#按任务阅读">按任务阅读</a> ·
   <a href="#项目概览">项目概览</a> ·
   <a href="#快速开始">快速开始</a> ·
@@ -50,10 +51,25 @@
   <a href="#文档地图">文档地图</a>
 </p>
 
+## 在线演示
+
+**[▶ 打开高清播放页 · 默认最高倍速](https://leiqingliang.github.io/silverpilot/)**
+
+完整项目演示录屏，时长约 **13 分 32 秒**。高清播放页默认使用 **2560 × 1528 原始录屏**，提供 **0.5、1、1.5、2、4、8、16 倍速**；打开时自动选择浏览器支持的最高档位（最高 16 倍速），也可切换流畅版。无需安装项目或登录账号。
+
+[下载原始高清录屏（约 296 MB）](https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4) · [视频归档与校验文件](https://github.com/LeiQingliang/silverpilot/releases/tag/demo-video-2026-11-04)
+
+### README 内嵌播放
+
+下面是保留完整时长的流畅版。GitHub 自带播放器不能预设默认倍速；需要默认最高倍速和高清原画，请使用上方专用播放页。
+
+https://github.com/user-attachments/assets/65eecf9c-077e-4c51-855c-c71717d7780a
+
 ## 按任务阅读
 
 | 你的目标 | 从这里开始 | 成功标志 |
 | --- | --- | --- |
+| 直接观看完整演示 | [高清播放页](https://leiqingliang.github.io/silverpilot/) · [README 内嵌播放](#readme-内嵌播放) | 无需安装；专用播放页默认最高可用倍速 |
 | 5 分钟内运行完整项目 | [快速开始](#快速开始) | 四个容器健康，登录页和后端代理可访问 |
 | 用 IDEA / VSCode 断点开发 | [运行与开发](#运行与开发) | Redis 由 Docker 管理，Java/Vite 分别由 IDE 管理 |
 | 修改后端或 Agent | [后端 README](SourceCode/cecsmsServe-springboot/README.md) | `mvnw.cmd clean verify` 通过 |
