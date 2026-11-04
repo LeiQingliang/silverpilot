@@ -29,7 +29,7 @@
       </div>
       <section class="player-card" aria-label="项目演示播放器">
         <div class="screen" id="screen">
-          <video id="video" controls playsinline preload="metadata" src="https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4" aria-label="SilverPilot 完整项目演示录屏">
+          <video id="video" controls playsinline preload="metadata" src="media/silverpilot-demo-original.mp4" aria-label="SilverPilot 完整项目演示录屏">
             你的浏览器无法播放此视频，请<a href="https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4">下载原始录屏</a>后观看。
           </video>
         </div>
@@ -51,8 +51,8 @@
         </div>
       </section>
       <div class="footnotes">
-        <p class="hint" id="speed-note">默认高清画质、最高支持倍速。阅读界面文字时可暂停或调低倍速；高倍速下，部分浏览器会自动静音。点击播放器开始观看。</p>
-        <div class="downloads"><a id="direct-link" href="https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4" target="_blank" rel="noopener">单独打开视频 ↗</a><a href="https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4">下载原始录屏 ↓</a></div>
+        <p class="hint" id="speed-note">默认高清画质、最高支持倍速。阅读界面文字时可暂停或调低倍速；高倍速下，部分浏览器会自动静音，流畅程度取决于设备性能和网络。点击播放器开始观看。</p>
+        <div class="downloads"><a id="direct-link" href="media/silverpilot-demo-original.mp4" target="_blank" rel="noopener">单独打开视频 ↗</a><a href="https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4">下载原始录屏 ↓</a></div>
       </div>
       <p class="credits">录屏展示录制时的项目状态。当前功能和运行方式请参阅项目 README。视频公开托管于 GitHub，加载速度取决于当前网络环境。</p>
     </main>
@@ -60,7 +60,7 @@
   <script>
     (() => {
       'use strict';
-      const sources = { hd: 'https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4', lite: 'https://github.com/user-attachments/assets/65eecf9c-077e-4c51-855c-c71717d7780a' };
+      const sources = { hd: 'media/silverpilot-demo-original.mp4', lite: 'media/silverpilot-demo.mp4' };
       const video = document.getElementById('video');
       const quality = document.getElementById('quality');
       const speed = document.getElementById('speed');
@@ -92,13 +92,13 @@
       function updateSpeedSummary() {
         const seconds = duration / preferredRate;
         const time = seconds < 60 ? `约 ${seconds.toFixed(1)} 秒` : `约 ${Math.floor(seconds / 60)} 分 ${Math.round(seconds % 60)} 秒`;
-        summary.textContent = `${rateText(preferredRate)} · 全片${time}（不含缓冲）`;
+        summary.textContent = `${rateText(preferredRate)} · 按设定倍速${time}（不含缓冲）`;
         speed.value = String(preferredRate);
       }
       function applyRate(rate) {
         try {
-          video.defaultPlaybackRate = rate;
-          video.playbackRate = rate;
+          if (video.defaultPlaybackRate !== rate) video.defaultPlaybackRate = rate;
+          if (video.playbackRate !== rate) video.playbackRate = rate;
           if (video.playbackRate !== rate) throw new Error('Unsupported playback rate');
           preferredRate = rate;
         } catch {
@@ -114,7 +114,7 @@
         speed.appendChild(option);
       }
       applyRate(maximumRate);
-      document.getElementById('default-badge').textContent = `默认 ${rateText(maximumRate)} · 最高可用档位`;
+      document.getElementById('default-badge').textContent = `默认 ${rateText(maximumRate)} · 最高可选档位`;
       document.getElementById('toolbar').hidden = false;
       document.getElementById('readout').hidden = false;
       if (!sources.lite || sources.lite.startsWith('__')) {
@@ -125,7 +125,7 @@
         if (Number.isFinite(video.duration) && video.duration > 0) {
           duration = video.duration;
           hasMetadata = true;
-          backward.disabled = forward.disabled = false;
+          backward.disabled = forward.disabled = Boolean(pendingSnapshot);
           updateSpeedSummary();
           setStatus(`${quality.value === 'hd' ? '高清原画' : '流畅'} · ${video.videoWidth} × ${video.videoHeight} · 点击播放`);
         }
@@ -164,18 +164,44 @@
         hasMetadata = false;
         setStatus('正在切换画质…');
         const expectedSource = new URL(url, document.baseURI).href;
-        const restore = () => {
-          if (revision !== generation || video.readyState < 1 || video.currentSrc !== expectedSource) return;
-          video.removeEventListener('loadedmetadata', restore);
-          if (Number.isFinite(video.duration)) video.currentTime = Math.min(snapshot.time, Math.max(0, video.duration - 0.05));
-          applyRate(preferredRate);
+        let targetTime = 0;
+        let seekRetries = 0;
+        const isCurrentSource = () => revision === generation && video.currentSrc === expectedSource;
+        const finish = () => {
+          if (!isCurrentSource()) return;
+          cancelSourceListener();
           pendingSnapshot = null;
+          backward.disabled = forward.disabled = false;
           if (snapshot.playing) video.play().catch(error => {
             if (revision === generation && error.name !== 'AbortError') setStatus('画质已切换，请点击播放继续。');
           });
+          else setStatus('画质已切换 · 已暂停');
         };
-        cancelSourceListener = () => video.removeEventListener('loadedmetadata', restore);
-        video.addEventListener('loadedmetadata', restore);
+        const afterSeek = () => {
+          if (!isCurrentSource()) return;
+          // Some media engines discard their first seek immediately after a source change.
+          if (Math.abs(video.currentTime - targetTime) > 0.5 && seekRetries++ < 1) {
+            video.currentTime = targetTime;
+            return;
+          }
+          finish();
+        };
+        const restore = () => {
+          if (!isCurrentSource() || video.readyState < 3) return;
+          video.removeEventListener('canplay', restore);
+          applyRate(preferredRate);
+          targetTime = Number.isFinite(video.duration) ? Math.min(snapshot.time, Math.max(0, video.duration - 0.05)) : 0;
+          if (Math.abs(video.currentTime - targetTime) <= 0.1) finish();
+          else {
+            video.addEventListener('seeked', afterSeek);
+            video.currentTime = targetTime;
+          }
+        };
+        cancelSourceListener = () => {
+          video.removeEventListener('canplay', restore);
+          video.removeEventListener('seeked', afterSeek);
+        };
+        video.addEventListener('canplay', restore);
         video.src = url;
         video.load();
         applyRate(preferredRate);

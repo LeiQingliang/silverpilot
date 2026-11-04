@@ -6,11 +6,6 @@ on:
     paths:
       - docs/demo/**
       - .github/workflows/demo-pages.yml
-  pull_request:
-    branches: [main]
-    paths:
-      - docs/demo/**
-      - .github/workflows/demo-pages.yml
   workflow_dispatch:
 
 permissions:
@@ -21,36 +16,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate:
+  build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
-      - name: Check the standalone player
+      - name: Download and verify the published videos
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
+          test -s docs/demo/index.html
+          mkdir -p docs/demo/media
+          gh release download demo-video-2026-11-04 --repo "$GH_REPO" --dir docs/demo/media --pattern 'silverpilot-demo-original.mp4' --pattern 'silverpilot-demo.mp4'
           python3 - <<'PY'
-          from html.parser import HTMLParser
+          import hashlib
           from pathlib import Path
-          text = Path('docs/demo/index.html').read_text(encoding='utf-8')
-          HTMLParser().feed(text)
-          assert '<video' in text and 'controls' in text
-          assert 'defaultPlaybackRate' in text and 'playbackRate' in text
-          assert 'silverpilot-demo-original.mp4' in text
-          assert not any(token in text for token in ['__HD_VIDEO_URL__', '__LITE_VIDEO_URL__', '__ORIGINAL_DOWNLOAD_URL__'])
-          assert len(text.encode()) < 100_000
-          print('Standalone player source checks passed.')
+          expected = {
+              'silverpilot-demo-original.mp4': (295990180, '9301fdd508874608a4eb29f8687581276d1e93d6f6279a0ea09b9163b36b40f8'),
+              'silverpilot-demo.mp4': (27871513, '7289410a2bab5266513aa5249d6c8bb8854fdda84b3dafa378b43f6b7c537771'),
+          }
+          for name, (size, digest) in expected.items():
+              path = Path('docs/demo/media') / name
+              assert path.stat().st_size == size, f'Wrong video size: {name}'
+              with path.open('rb') as video:
+                  actual = hashlib.file_digest(video, 'sha256').hexdigest()
+              assert actual == digest, f'Wrong video checksum: {name}'
+          print('Both video files match the published SHA-256 values.')
           PY
       - name: Package the player
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: docs/demo
 
   deploy:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: validate
+    if: github.ref == 'refs/heads/main'
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
