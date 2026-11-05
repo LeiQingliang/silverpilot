@@ -154,7 +154,7 @@ public class McpController {
                 case "cecsms_search_knowledge" -> knowledgeBaseService.searchText(
                         requiredString(arguments, "query", 200), 3);
                 case "cecsms_get_agent_metrics" -> jsonMapper.writeValueAsString(
-                        runService.systemAnalytics(optionalDays(arguments)));
+                        aggregateMetrics(optionalDays(arguments)));
                 default -> throw new IllegalArgumentException("Unknown tool: " + name);
             };
             actionService.recordIntegration(name, true, text);
@@ -178,6 +178,31 @@ public class McpController {
         overview.put("knowledge", knowledgeBaseService.status());
         overview.put("providers", providerService.statuses());
         return jsonMapper.writeValueAsString(overview);
+    }
+
+    /** Explicit allow-list: per-user recentRuns must never cross the MCP boundary. */
+    private Map<String, Object> aggregateMetrics(int days) {
+        AgentRunService.AnalyticsView view = runService.systemAnalytics(days);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("days", view.days());
+        result.put("totalRuns", view.totalRuns());
+        result.put("successRate", view.successRate());
+        result.put("successDefinition", "(COMPLETED + WAITING_CONFIRMATION) / totalRuns; not booking conversion");
+        result.put("completedRuns", view.completedRuns());
+        result.put("waitingConfirmation", view.waitingConfirmation());
+        result.put("degradedRuns", view.degradedRuns());
+        result.put("failedRuns", view.failedRuns());
+        result.put("p50LatencyMs", view.p50LatencyMs());
+        result.put("p95LatencyMs", view.p95LatencyMs());
+        result.put("totalTokens", view.totalTokens());
+        result.put("toolCalls", view.toolCalls());
+        result.put("toolSuccessRate", view.toolSuccessRate());
+        result.put("providers", view.providers());
+        result.put("providerMetrics", view.providerMetrics());
+        result.put("errors", view.errors());
+        result.put("truncated", view.truncated());
+        result.put("sampleLimit", view.sampleLimit());
+        return result;
     }
 
     private String executePublic(String toolName, Map<String, Object> arguments) {

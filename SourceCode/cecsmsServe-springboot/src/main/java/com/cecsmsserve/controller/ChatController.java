@@ -562,7 +562,7 @@ public class ChatController {
             @NotEmpty(message = "消息不能为空")
             @Size(max = 30, message = "消息历史最多保留30条")
             List<@Valid ChatMessage> messages,
-            @Pattern(regexp = "auto|deepseek|doubao|mock", message = "模型提供方无效")
+            @Pattern(regexp = "auto|deepseek|doubao|longcat|mock", message = "模型提供方无效")
             String provider,
             @Size(max = 3, message = "一次最多上传3张图片")
             List<@Valid ChatAttachment> attachments) { }
@@ -571,7 +571,7 @@ public class ChatController {
             @NotBlank(message = "照护需求不能为空")
             @Size(max = 1200, message = "照护需求不能超过1200字")
             String needs,
-            @Pattern(regexp = "auto|deepseek|doubao|mock", message = "模型提供方无效")
+            @Pattern(regexp = "auto|deepseek|doubao|longcat|mock", message = "模型提供方无效")
             String provider) { }
 
     public record ChatMessage(

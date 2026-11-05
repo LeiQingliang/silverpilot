@@ -59,7 +59,17 @@ pwsh -NoProfile -ExecutionPolicy Bypass `
 .\scripts\run-agent-evaluation.ps1 -EnvFile .\.env.docker -MaxCases 0
 ```
 
-省略参数时默认只跑前 6 项，可用 `-MaxCases 6` 明确做快速冒烟；`-MaxCases 0` 执行全部 16 项。全量运行需要 `.env.docker` 中的 JWT 与 MCP 密钥，并需要可用的 Provider；可用 `-Provider auto|deepseek|doubao|mock` 选择路由，用 `-ReportPath <path>` 保存脱敏 JSON 结果。
+省略参数时默认只跑前 6 项，可用 `-MaxCases 6` 明确做快速冒烟；`-MaxCases 0` 执行全部 16 项。全量运行需要 `.env.docker` 中的 JWT 与 MCP 密钥，并需要可用的 Provider；可用 `-Provider auto|deepseek|doubao|longcat|mock` 选择路由，用 `-ReportPath <path>` 保存脱敏 JSON 结果。
+
+## 重复试验与可比性
+
+新增 `-Trials 3`（1–10 次）和 `-CaseIds`，先选固定用例，再应用 MaxCases 上限。每次试验的待确认动作都立即取消，取消失败即判失败。
+
+报告 schemaVersion=2 保留实际 Provider/模型、run ID、Prompt 版本、延迟、Token、试验编号，以及本地代码提交/未提交状态、知识/Prompt/数据集指纹和服务端 Prompt 快照。它不保存原始回复、图片或确认令牌。本地代码指纹不能证明远端部署版本，运行前必须核对被测栈。
+
+`-EvidenceType live|mock|synthetic` 明确证据来源；实际路由到 mock（包括 auto）会自动标为 mock，混用真实和 mock 的报告标为 mixed 并失败，分析器拒绝比较。合成协议测试使用 synthetic，不能标记成真实模型实验。模型通道被替换、降级、没有可审计运行或清理动作失败时，不能算该模型通过；明确触发迭代上限的安全阻断按该契约单独判定。预期工具必须有 completed 或对应写入的 waiting 轨迹，失败调用不计通过。图片路由根据服务端声明的 vision 能力判断。
+
+比较报告使用 [CatPaw 运营分析工具](../catpaw/README.md)。对比会拒绝版本、输入、试验集合、数据性质不一致或未提交源码的报告。人工质量评分与真实用户试用保持独立，不将历史 16/16 契约结果称为回答准确率。
 
 脚本使用本地签名 JWT 调用真实 `/chat`，检查工具轨迹、知识来源、待确认状态和安全文本；服务/菜谱 ID 经 MCP 动态读取。测试创建的待确认动作会立即取消，触发限流时只按 `Retry-After` 有界重试一次。若指定 Mock，结果只能证明本地契约和只读工具链，不能当作真实模型效果。
 

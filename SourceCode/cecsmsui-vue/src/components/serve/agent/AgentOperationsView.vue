@@ -22,20 +22,22 @@
 
     <div class="metric-grid" aria-label="运行概览">
       <article><span>协助次数</span><strong>{{ analytics.totalRuns }}</strong><small>近 {{ analytics.days }} 天</small></article>
-      <article><span>链路成功率</span><strong>{{ analytics.successRate.toFixed(1) }}%</strong><small>{{ analytics.degradedRuns }} 次降级处理</small></article>
-      <article><span>平均响应</span><strong>{{ formatLatency(analytics.averageLatencyMs) }}</strong><small>{{ analytics.toolCalls }} 次业务工具调用</small></article>
+      <article><span>运行成功率</span><strong>{{ analytics.totalRuns ? analytics.successRate.toFixed(1) + '%' : '暂无数据' }}</strong><small>含待确认；不含 {{ analytics.degradedRuns }} 次降级</small></article>
+      <article><span>平均响应</span><strong>{{ analytics.totalRuns ? formatLatency(analytics.averageLatencyMs) : '—' }}</strong><small>{{ analytics.toolCalls }} 次业务工具调用</small></article>
       <article><span>待用户确认</span><strong>{{ analytics.waitingConfirmation }}</strong><small>写操作均需二次确认</small></article>
     </div>
 
+    <el-alert v-if="analytics.truncated" :title="'运行指标仅覆盖最近 ' + analytics.sampleLimit + ' 条记录，不代表所选周期全量。'" type="warning" show-icon :closable="false" />
+    <p class="panel-copy">运行成功率 =（已完成运行 + 等待确认运行）÷ 统计运行数，不代表预约完成率。响应耗时 P50：{{ analytics.totalRuns ? formatLatency(analytics.p50LatencyMs) : '—' }}；P95：{{ analytics.totalRuns ? formatLatency(analytics.p95LatencyMs) : '—' }}。</p>
     <div class="operations-grid">
       <el-card shadow="never" class="panel">
         <template #header>
-          <div class="panel-heading"><div><span>服务引擎</span><h2>模型与多模态能力</h2></div><el-tag :type="visionConfigured ? 'success' : 'warning'" effect="plain">{{ visionConfigured ? '图文可用' : '仅文字可用' }}</el-tag></div>
+          <div class="panel-heading"><div><span>服务引擎</span><h2>模型与多模态能力</h2></div><el-tag :type="textConfigured ? 'success' : 'warning'" effect="plain">{{ visionConfigured ? '图文已配置' : textConfigured ? '文字已配置' : '待配置模型' }}</el-tag></div>
         </template>
         <div v-if="providers.length" class="provider-list">
           <article v-for="provider in providers" :key="provider.id">
             <div><strong>{{ provider.name }}</strong><small>{{ provider.model || '模型名称未公开' }}</small></div>
-            <el-tag :type="provider.configured ? 'success' : 'info'" effect="plain" size="small">{{ provider.configured ? '已连接' : '未配置' }}</el-tag>
+            <el-tag :type="provider.configured ? 'success' : 'info'" effect="plain" size="small">{{ provider.configured ? '已配置' : '未配置' }}</el-tag>
             <ul><li :class="{ enabled: provider.text }">文字</li><li :class="{ enabled: provider.vision }">图片</li><li :class="{ enabled: provider.serverVoice }">服务端语音</li></ul>
           </article>
         </div>
@@ -45,9 +47,10 @@
 
       <el-card shadow="never" class="panel">
         <template #header>
-          <div class="panel-heading"><div><span>外部协作</span><h2>WorkBuddy 连接</h2></div><el-tag :type="workBuddy.configured ? 'success' : 'warning'" effect="plain">{{ workBuddy.configured ? '已连接' : '待配置' }}</el-tag></div>
+          <div class="panel-heading"><div><span>外部协作</span><h2>WorkBuddy 连接 / CatPaw</h2></div><el-tag :type="workBuddy.configured ? 'success' : 'warning'" effect="plain">{{ workBuddy.configured ? '服务端已配置' : '待配置' }}</el-tag></div>
         </template>
         <dl class="connection-details">
+          <div><dt>接入状态</dt><dd>客户端连接需实际验证；配置密钥不代表已接通。</dd></div>
           <div><dt>协议版本</dt><dd>{{ workBuddy.protocolVersion || '—' }}</dd></div>
           <div><dt>安全模式</dt><dd>{{ workBuddy.mode || '只读' }}</dd></div>
         </dl>
@@ -60,7 +63,7 @@
             <em :class="statusTone(item.status)">{{ statusLabel(item.status) }}</em>
           </article>
         </div>
-        <div v-else class="empty-note">还没有 WorkBuddy 调用记录。</div>
+        <div v-else class="empty-note">还没有只读 MCP 调用记录。</div>
       </el-card>
 
       <el-card shadow="never" class="panel">
@@ -82,6 +85,19 @@
       </el-card>
 
       <el-card shadow="never" class="panel run-panel">
+        <template #header><div class="panel-heading"><div><span>运行分布</span><h2>按服务引擎查看</h2></div></div></template>
+        <p class="panel-copy">不同引擎的任务构成可能不同；以下为描述性统计，不能据此认定模型效果优劣。</p>
+        <div class="table-scroll"><el-table :data="analytics.providerMetrics" empty-text="暂无运行样本">
+          <el-table-column prop="provider" label="服务引擎" min-width="120" />
+          <el-table-column prop="runs" label="运行次数" width="100" />
+          <el-table-column label="运行成功率" width="130"><template #default="{ row }">{{ row.successRate }}%</template></el-table-column>
+          <el-table-column label="P50 耗时" width="120"><template #default="{ row }">{{ formatLatency(row.p50LatencyMs) }}</template></el-table-column>
+          <el-table-column label="P95 耗时" width="120"><template #default="{ row }">{{ formatLatency(row.p95LatencyMs) }}</template></el-table-column>
+          <el-table-column prop="totalTokens" label="Token 总量" min-width="120" />
+        </el-table></div>
+      </el-card>
+
+      <el-card shadow="never" class="panel run-panel">
         <template #header>
           <div class="panel-heading"><div><span>用户办理</span><h2>最近运行记录</h2></div><small>提示词 {{ agentPromptVersion }}</small></div>
         </template>
@@ -98,6 +114,7 @@
         </div>
       </el-card>
     </div>
+    <AgentFeedbackPanel :days="days" :recent-runs="analytics.recentRuns" :refresh-key="generatedAt || ''" />
     <footer class="update-note">数据生成于 {{ formatDate(generatedAt) }}；页面在可见时每 60 秒自动更新。</footer>
   </section>
 </template>
@@ -107,6 +124,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/utils/axios'
 import { formatLatency, normalizeAnalytics } from '@/utils/agent'
+import AgentFeedbackPanel from './AgentFeedbackPanel.vue'
 
 const statusLabel = (status) => ({ COMPLETED: '已完成', WAITING_CONFIRMATION: '待确认', DEGRADED: '已降级', FAILED: '失败', SUCCEEDED: '成功', PENDING: '待确认', EXECUTING: '执行中', CANCELLED: '已取消', EXPIRED: '已过期' }[status] || status || '未知')
 const statusTone = (status) => ({ SUCCEEDED: 'success', COMPLETED: 'success', FAILED: 'danger', CANCELLED: 'muted', EXPIRED: 'muted', PENDING: 'warning', WAITING_CONFIRMATION: 'warning', EXECUTING: 'info', DEGRADED: 'warning' }[status] || 'muted')
@@ -130,6 +148,7 @@ const prompts = ref({})
 let refreshTimer
 
 const visionConfigured = computed(() => providers.value.some((item) => item.configured && item.vision))
+const textConfigured = computed(() => providers.value.some((item) => item.configured && item.text))
 const agentPromptVersion = computed(() => prompts.value?.agent?.version || '—')
 const safeArray = (value) => Array.isArray(value) ? value : []
 const loadOverview = async ({ silent = false } = {}) => {

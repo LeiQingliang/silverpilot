@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,5 +52,36 @@ class AgentRunServiceTests {
         run.setTotalTokens(50);
         run.setCreatedAt(LocalDateTime.now());
         return run;
+    }
+
+    @Test
+    void excludesDegradedAndUnknownStatusesFromSuccessAndReportsPercentiles() {
+        AgentRunMapper mapper = mock(AgentRunMapper.class);
+        when(mapper.selectList(any())).thenReturn(List.of(
+                run("longcat", AgentRunService.COMPLETED, 100, 1, 1),
+                run("longcat", AgentRunService.WAITING_CONFIRMATION, 200, 1, 1),
+                run("longcat", AgentRunService.DEGRADED, 300, 1, 0),
+                run("longcat", AgentRunService.FAILED, 400, 1, 0),
+                run("longcat", "UNKNOWN", 500, 0, 0)));
+        var result = new AgentRunService(mapper).systemAnalytics(60);
+        assertEquals(30, result.days());
+        assertEquals(40.0, result.successRate());
+        assertEquals(1, result.completedRuns());
+        assertEquals(1, result.waitingConfirmation());
+        assertEquals(1, result.degradedRuns());
+        assertEquals(1, result.failedRuns());
+        assertEquals(300, result.p50LatencyMs());
+        assertEquals(500, result.p95LatencyMs());
+        assertEquals(40.0, result.providerMetrics().getFirst().successRate());
+    }
+
+    @Test
+    void disclosesTruncatedSamplesWithoutCountingTheExtraDetectionRow() {
+        AgentRunMapper mapper = mock(AgentRunMapper.class);
+        when(mapper.selectList(any())).thenReturn(Collections.nCopies(5001, run("deepseek", "COMPLETED", 100, 1, 1)));
+        var result = new AgentRunService(mapper).systemAnalytics(7);
+        assertEquals(true, result.truncated());
+        assertEquals(5000, result.totalRuns());
+        assertEquals(5000, result.toolCalls());
     }
 }

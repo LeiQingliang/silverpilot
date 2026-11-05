@@ -31,7 +31,13 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & (Join-Path $PSScriptRoot 'validate-knowledge-base.ps1')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& (Join-Path $PSScriptRoot 'test-knowledge-governance.ps1')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & (Join-Path $PSScriptRoot 'validate-evaluation-dataset.ps1')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& node --test (Join-Path $PSScriptRoot 'test/evaluation-runner.test.mjs')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& python (Join-Path $PSScriptRoot 'test/test_evaluation_analysis.py')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & (Join-Path $PSScriptRoot 'verify-release-contract.ps1')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

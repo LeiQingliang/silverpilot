@@ -2,6 +2,7 @@
 
 > 适用项目：AI-Driven Intelligent Elderly Care System / SilverPilot
 > 文档快照：2026-08-19
+> 知识治理维护：2026-11-06，04 健康文档因审核到期隔离为 draft；原厂商操作说明未在本次重新验证。
 > 目标：先在同一台 Windows 电脑上跑通“WorkBuddy 工作空间 + ima 知识库 + 只读 MCP”，再按需升级为企业 HTTPS 接入。
 
 ## 1. 先看结论
@@ -15,7 +16,7 @@
 ```mermaid
 flowchart LR
     Repo[项目工作空间<br/>源码/文档/脚本] --> WB[WorkBuddy]
-    KB[ima 受控知识库<br/>01-08 共 8 篇] -->|原生授权/检索| WB
+    KB[ima 受控知识库<br/>当前审核有效的 approved 文档] -->|原生授权/检索| WB
     API[Spring Boot :8083<br/>/mcp] -->|6 个只读工具| WB
     WB --> Draft[分析、报告、改动草案]
     Draft --> Review{人工审核}
@@ -40,7 +41,7 @@ flowchart LR
 | WorkBuddy 连接器参考 | 已提供，不含真实凭据 | [`workbuddy/connector-template.json`](../workbuddy/connector-template.json) |
 | Agent Manifest 参考 | 已提供最小角色与安全提示 | [`workbuddy/agent-manifest.json`](../workbuddy/agent-manifest.json) |
 | 项目操作 Skill | 已提供审计、扩展和交付门禁 | [`.codebuddy/skills/silverpilot-operator`](../.codebuddy/skills/silverpilot-operator/SKILL.md) |
-| ima-ready 知识包 | 9 篇 Markdown，其中 8 篇为运行时 `approved` | [`knowledge-base/ima-ready`](../knowledge-base/ima-ready) |
+| ima-ready 知识包 | 2026-11-06 为 9 篇 Markdown、7 篇 `approved`、1 篇隔离 `draft`、1 篇治理规范；仅审核有效的 approved 可检索 | [`knowledge-base/ima-ready`](../knowledge-base/ima-ready) |
 | 知识包校验 | 已实现元数据、重复、链接、过期和秘密模式检查 | [`scripts/validate-knowledge-base.ps1`](../scripts/validate-knowledge-base.ps1) |
 
 仍需人工完成的外部动作：安装并登录 WorkBuddy、创建/登录 ima 知识库、扫码授权、导入文件、信任 MCP。仓库中有模板不等于这些云端动作已经完成。
@@ -185,16 +186,16 @@ Set-Clipboard -Value ''
 .\scripts\validate-knowledge-base.ps1
 ```
 
-预期结果为：
+2026-11-06 的预期结果包括健康草稿的待复核警告，以及：
 
 ```text
-[PASS] Knowledge base is clean: 9 documents, 8 approved.
+[PASS] Knowledge base is clean: 9 documents, 7 approved, 1 draft (excluded); as of 2026-11-06 Asia/Shanghai.
 ```
 
 然后在 ima 中创建知识库，推荐名称：
 
 ```text
-SilverPilot-智慧养老-受控知识-v1.0.0
+SilverPilot-智慧养老-受控知识-v1.1.0
 ```
 
 打开本地目录：
@@ -203,20 +204,19 @@ SilverPilot-智慧养老-受控知识-v1.0.0
 explorer.exe '.\knowledge-base\ima-ready'
 ```
 
-只导入下面 8 篇 `approved` 文件：
+只导入当前审核有效的 `approved` 文件；2026-11-06 的清单为下面 7 篇（有效期仍需在导入当天检查）：
 
 ```text
 01-产品与业务边界.md
 02-Agent能力与安全策略.md
 03-养老服务业务SOP.md
-04-健康问答安全边界.md
 05-AI销售演示与客户异议.md
 06-Agent运营指标口径.md
 07-WorkBuddy升级与扩展流程.md
 08-机器人与半导体行业扩展映射.md
 ```
 
-不要导入 `00-知识库治理规范.md`：它的状态是 `governance`，用于维护知识包，不应被当作面向用户的业务答案。
+不要导入 `00-知识库治理规范.md`（`governance`）和 `04-健康问答安全边界.md`（审核过期，`draft`）。若曾导入 04，应在 ima 中移除旧副本并核验删除；仓库变更不代表外部知识库已同步。专业复核仍待完成，不能顺延日期后直接恢复导入。
 
 建议额外创建一个隔离库：
 
@@ -406,7 +406,7 @@ MCP 正常、知识答错   → ima 导入/选择/知识质量问题
 
 仓库中的 [`connector-template.json`](../workbuddy/connector-template.json) 是字段映射参考，不包含企业空间 ID 和凭据；以企业后台当前 schema 为准，不要因为模板 JSON 能解析就宣称已发布。
 
-创建后先保持“待启用”，完成 Test Run、权限审查和工具过滤，再向团队启用。若企业租户的资料库中没有 ima，使用企业自定义知识库导入同一套 8 篇 `approved` 文档；不要假设存在未公开的 ima 自动同步 API。
+创建后先保持“待启用”，完成 Test Run、权限审查和工具过滤，再向团队启用。若企业租户的资料库中没有 ima，使用企业自定义知识库导入同一套当前审核有效的 `approved` 文档；不要假设存在未公开的 ima 自动同步 API。
 
 随后创建或编辑企业 Agent：参考 [`agent-manifest.json`](../workbuddy/agent-manifest.json) 填写身份和 System Prompt，挂载刚创建的连接器、项目 Skill 与知识库，先在 Test Run 运行 T1–T5，再发布版本。模板只提供可审计的最小字段，企业空间、Runtime、Session 和渠道仍需在实际后台配置。
 
@@ -415,7 +415,7 @@ MCP 正常、知识答错   → ima 导入/选择/知识质量问题
 每次知识变更按以下顺序执行：
 
 1. 在仓库 `knowledge-base/ima-ready` 修改唯一事实源；
-2. 更新文档 `version`、`reviewed_at`、`next_review_at` 和必要来源；
+2. 更新文档版本和必要来源；只有完成真实复核后才更新 `reviewed_at`、`next_review_at`，隔离过期草稿保留历史日期；
 3. 运行：
 
    ```powershell
@@ -437,7 +437,7 @@ MCP 正常、知识答错   → ima 导入/选择/知识质量问题
 - [ ] `mcp-smoke.ps1` 通过，精确发现 6 个只读工具；
 - [ ] MCP 密钥只存在于忽略文件/WorkBuddy 用户级配置，不在 Git 中；
 - [ ] WorkBuddy 已信任连接器，显示 6/6 工具；
-- [ ] ima 受控知识库只导入 01–08 共 8 篇 `approved` 文档；
+- [ ] ima 受控知识库只导入审核有效的 `approved` 文档，并已移除过期旧副本（2026-11-06 为 01、02、03、05、06、07、08）；
 - [ ] WorkBuddy 能同时使用 MCP 实时数据与 ima 规则知识；
 - [ ] 写操作测试没有绕过 Web 端身份、确认和审计；
 - [ ] 健康紧急问题能正确分流，不输出诊断或处方；

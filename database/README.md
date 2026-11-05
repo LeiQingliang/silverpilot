@@ -24,7 +24,7 @@
 
 `a_old.sql` 是本地演示数据库初始化脚本，不是生产数据备份。数据用于页面、权限、Agent 工具和测试演示，不代表真实老人、养老机构、订单或经营结果。所有联系号码和身份标识均为明确无效的合成值，用于保持字段与引用契约，禁止替换为真人数据后提交。
 
-当前种子包含 21 张基础表、21 个外键、6 个启动门禁关键复合索引和 18 个演示账户。其中 18 个核心业务外键进入 `databaseContract` 与种子验证门禁，另有 3 个菜谱/助餐关系外键；`agent_action`、`agent_run` 已包含在这 21 张表中。表数、18/18 核心外键、6/6 关键索引和数据不变式由临时 schema 验证；外键总数同时与当前 SQL 声明核对。
+当前种子定义 23 张基础表、21 个外键、6 个启动门禁关键复合索引和 18 个演示账户。其中 18 个核心业务外键进入 `databaseContract` 与种子验证门禁，另有 3 个菜谱/助餐关系外键。新增的 `agent_feedback`、`agent_feedback_event` 分别保存运营问题和追加式流转记录；只保存类别、运行编号、修复/复测引用，不保存原始对话或健康资料。历史的 21 表验收记录不代表本次新增表已完成 MySQL 实机验证。
 
 当前种子的 187 个非空日期值统一为 2027 年，包含 `user.birthday`（出生日期），业务日期与本次本地 `a_old` 同步。日期之外的种子内容保持不变；`verify-database-seed.ps1` 会遍历日期列检查年份。这里使用固定年份的演示数据，应用后续新增记录仍按实际系统时间生成日期。已有 Docker 数据卷需单独迁移，普通启动不会覆盖运行期间新增的数据。
 
@@ -48,7 +48,7 @@ database/a_old.sql → a_old
 .\scripts\verify-database-seed.ps1
 ```
 
-脚本校验 21/21 表、18/18 门禁外键、6/6 关键索引、报名状态/计数、服务层级、全部种子图片路径与原生 `CHECK TABLE`，并在 `finally` 中删除临时 schema 和容器内临时 SQL。它不会重建正在使用的 `a_old`。
+脚本校验 23 张所需表、18 个门禁外键、6 个关键索引、报名状态/计数、服务层级、全部种子图片路径与原生 `CHECK TABLE`，并在 `finally` 中删除临时 schema 和容器内临时 SQL。它不会重建正在使用的 `a_old`。
 
 项目根 `image/` 保存 101 张可解码原图及其 101 张同名 WebP 优化图。当前种子使用其中 48 张真实栅格图；`validate-seed-assets.ps1` 在每次 Local/Docker 启动前检查 URL 边界、文件存在性、文件签名和 WebP 伴随文件。已有卷中的旧演示 SVG 路径由后端幂等迁移为这些真实图片，无法解析的持久化图片会阻止后端报告就绪。
 
@@ -63,11 +63,11 @@ database/a_old.sql → a_old
 - `agent_action`：写操作确认状态机、用户归属、TTL 与脱敏审计；
 - `agent_run`：provider、模态、prompt version、工具数、延迟、Token、状态和错误类别。
 
-后端的 `src/main/resources/schema.sql` 只负责幂等创建两张 Agent 表，`AgentSchemaMigration` 通过 JDBC metadata 升级旧 `agent_run` 列，避免依赖特定版本的 `ADD COLUMN IF NOT EXISTS` 方言。其余 19 张业务表仍由本目录的种子/正式迁移负责，应用启动不会静默重建它们。
+后端的 `src/main/resources/schema.sql` 负责幂等创建四张 Agent/运营表，旧数据库会在启动时获得两个空的反馈表；`AgentSchemaMigration` 通过 JDBC metadata 升级旧 `agent_run` 列，避免依赖特定版本的 `ADD COLUMN IF NOT EXISTS` 方言。其余 19 张业务表仍由本目录的种子/正式迁移负责，应用启动不会静默重建它们。
 
 `database/Dockerfile` 基于官方 MySQL 9.7.2 LTS，移除服务端运行和初始化均不需要的 `mysql-shell`，以 Go 1.27.0 重编译入口降权所需的 `gosu`，再复制最终文件系统以避免已删除组件残留在镜像层中。`mysqld`、`mysql`、`mysqladmin`、`mysqldump` 与官方 entrypoint 契约均保留。
 
-从旧 LTS 升级时必须先备份并做隔离恢复验证。2026-08-18 执行的 8.4.11 → 9.7.2 升级保留了命名卷，升级前备份已在临时 schema 成功恢复 22 张表与 18 个演示用户；其中现有卷额外保留了完整性修复产生的隔离表，而全新 `a_old.sql` 的可移植契约仍是上述 21 张表。本地 `backups/` 被 Git 忽略。不要把数据库备份、密码或真实数据提交到仓库；时间点证据见[验证报告](../docs/VALIDATION_REPORT.md)。
+从旧 LTS 升级时必须先备份并做隔离恢复验证。2026-08-18 执行的 8.4.11 → 9.7.2 升级保留了命名卷，升级前备份已在临时 schema 成功恢复 22 张表与 18 个演示用户；其中现有卷额外保留了完整性修复产生的隔离表，当时全新 `a_old.sql` 的可移植契约为 21 张表；当前版本在此基础上新增两张运营反馈表。本地 `backups/` 被 Git 忽略。不要把数据库备份、密码或真实数据提交到仓库；时间点证据见[验证报告](../docs/VALIDATION_REPORT.md)。
 
 需要验证真实 Web → Spring Boot → MyBatis-Plus → MySQL 写链路时，在已启动的全 Docker 栈执行：
 

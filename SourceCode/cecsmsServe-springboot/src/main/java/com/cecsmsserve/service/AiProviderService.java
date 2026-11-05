@@ -14,10 +14,12 @@ public class AiProviderService {
     public static final String AUTO = "auto";
     public static final String DEEPSEEK = "deepseek";
     public static final String DOUBAO = "doubao";
+    public static final String LONGCAT = "longcat";
     public static final String MOCK = "mock";
 
     private final DeepSeekClient deepSeekClient;
     private final DoubaoClient doubaoClient;
+    private final LongCatClient longCatClient;
     private final MockAiProviderClient mockClient;
     private final String deepSeekModel;
     private final boolean deepSeekThinking;
@@ -29,6 +31,7 @@ public class AiProviderService {
     public AiProviderService(
             DeepSeekClient deepSeekClient,
             DoubaoClient doubaoClient,
+            LongCatClient longCatClient,
             MockAiProviderClient mockClient,
             @Value("${deepseek.api.model:deepseek-v4-flash}") String deepSeekModel,
             @Value("${deepseek.api.thinking-enabled:false}") boolean deepSeekThinking,
@@ -37,6 +40,7 @@ public class AiProviderService {
             @Value("${agent.ai.max-total-tokens-per-run:12000}") int maxTotalTokensPerRun) {
         this.deepSeekClient = deepSeekClient;
         this.doubaoClient = doubaoClient;
+        this.longCatClient = longCatClient;
         this.mockClient = mockClient;
         this.deepSeekModel = deepSeekModel;
         this.deepSeekThinking = deepSeekThinking;
@@ -50,20 +54,20 @@ public class AiProviderService {
             DoubaoClient doubaoClient,
             String deepSeekModel,
             boolean deepSeekThinking) {
-        this(deepSeekClient, doubaoClient, null, deepSeekModel, deepSeekThinking,
+        this(deepSeekClient, doubaoClient, null, null, deepSeekModel, deepSeekThinking,
                 false, 1800, 12000);
     }
 
     public ProviderSelection resolve(String requested, boolean needsVision) {
         String normalized = requested == null || requested.isBlank()
                 ? AUTO : requested.trim().toLowerCase();
-        if (!List.of(AUTO, DEEPSEEK, DOUBAO, MOCK).contains(normalized)) {
+        if (!List.of(AUTO, DEEPSEEK, DOUBAO, LONGCAT, MOCK).contains(normalized)) {
             throw new IllegalArgumentException("不支持的模型提供方：" + requested);
         }
 
         if (needsVision) {
-            if (DEEPSEEK.equals(normalized) || MOCK.equals(normalized)) {
-                throw new IllegalArgumentException("当前 DeepSeek 通道仅启用文本能力，请选择豆包多模态");
+            if (DEEPSEEK.equals(normalized) || LONGCAT.equals(normalized) || MOCK.equals(normalized)) {
+                throw new IllegalArgumentException("当前所选通道仅启用文本能力，请选择豆包多模态");
             }
             if (!doubaoClient.isConfigured()) {
                 throw new AiProviderException(
@@ -91,16 +95,25 @@ public class AiProviderService {
             }
             return mock();
         }
+        if (LONGCAT.equals(normalized)) {
+            if (longCatClient == null || !longCatClient.isConfigured()) {
+                throw new AiProviderException("LongCat 尚未配置，请设置 LONGCAT_API_KEY 与 LONGCAT_MODEL", 503);
+            }
+            return longCat();
+        }
         if (deepSeekClient.isConfigured()) {
             return deepSeek();
         }
         if (doubaoClient.isConfigured()) {
             return doubao();
         }
+        if (longCatClient != null && longCatClient.isConfigured()) {
+            return longCat();
+        }
         if (mockEnabled && mockClient != null) {
             return mock();
         }
-        throw new AiProviderException("没有可用模型，请先配置 DeepSeek 或豆包", 503);
+        throw new AiProviderException("没有可用模型，请先配置 DeepSeek、豆包或 LongCat", 503);
     }
 
     public Map<String, Object> chatCompletion(
@@ -108,6 +121,7 @@ public class AiProviderService {
         return switch (provider.id()) {
             case DEEPSEEK -> deepSeekClient.chatCompletion(body);
             case DOUBAO -> doubaoClient.chatCompletion(body);
+            case LONGCAT -> longCatClient.chatCompletion(body);
             case MOCK -> mockClient.chatCompletion(body);
             default -> throw new IllegalArgumentException("模型路由无效");
         };
@@ -125,6 +139,10 @@ public class AiProviderService {
                 new ProviderView(DOUBAO, "豆包·火山方舟", doubaoClient.model(),
                         doubaoClient.isConfigured(), true, true, false,
                         doubaoClient.isConfigured() ? "文本、图片与业务工具在线" : "等待 API Key 与模型 Endpoint ID"),
+                new ProviderView(LONGCAT, "LongCat · 美团", longCatClient == null ? "LongCat-2.5" : longCatClient.model(),
+                        longCatClient != null && longCatClient.isConfigured(), true, false, false,
+                        longCatClient != null && longCatClient.isConfigured()
+                                ? "已配置：文本、工具与 JSON；可用性以实际调用为准" : "等待本机 LongCat API Key"),
                 new ProviderView(MOCK, "Mock · 本地开发", MockAiProviderClient.MODEL,
                         mockEnabled && mockClient != null, true, false, false,
                         mockEnabled ? "显式开发模式：本地工具可用，不调用外部模型" : "默认关闭")
@@ -205,6 +223,10 @@ public class AiProviderService {
 
     private ProviderSelection mock() {
         return new ProviderSelection(MOCK, "Mock · 本地开发", MockAiProviderClient.MODEL, false, false);
+    }
+
+    private ProviderSelection longCat() {
+        return new ProviderSelection(LONGCAT, "LongCat · 美团", longCatClient.model(), false, false);
     }
 
     public record ProviderSelection(

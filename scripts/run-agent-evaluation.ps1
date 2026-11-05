@@ -5,7 +5,10 @@ param(
     [int]$MaxCases = 6,
     [string]$Dataset = (Join-Path $PSScriptRoot '..\evaluation\agent-evaluation-dataset.jsonl'),
     [string]$ReportPath = '',
-    [string]$EnvFile = ''
+    [string]$EnvFile = '',
+    [ValidateRange(1, 10)][int]$Trials = 1,
+    [string[]]$CaseIds = @(),
+    [ValidateSet('live', 'mock', 'synthetic')][string]$EvidenceType = 'live'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -36,8 +39,34 @@ if ([string]::IsNullOrWhiteSpace($jwtSecret) -or $jwtSecret.Length -lt 32) {
 }
 $headers = @{ Authorization = "Bearer $(New-LocalJwt $jwtSecret $UserId)" }
 $cases = @(Get-Content -LiteralPath $Dataset -Encoding utf8 | Where-Object { $_.Trim() } | ForEach-Object { $_ | ConvertFrom-Json })
+if ($CaseIds.Count -gt 0) {
+    foreach ($caseId in $CaseIds) {
+        if ($caseId -notin @($cases.id)) { throw "Unknown evaluation case: $caseId" }
+    }
+    $cases = @($cases | Where-Object { $_.id -in $CaseIds })
+}
 if ($MaxCases -gt 0) { $cases = @($cases | Select-Object -First $MaxCases) }
+if ($cases.Count -eq 0) { throw 'No evaluation cases selected.' }
+if ($Provider -eq 'mock') { $EvidenceType = 'mock' }
 $results = [System.Collections.Generic.List[object]]::new()
+$projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$sourceCommit = (& git -C $projectRoot rev-parse HEAD 2>$null)
+$sourceDirty = [bool](& git -C $projectRoot status --porcelain 2>$null)
+$datasetHash = (Get-FileHash -LiteralPath $Dataset -Algorithm SHA256).Hash
+function Get-TreeFingerprint([string]$Directory) {
+    $entries = @(Get-ChildItem -LiteralPath $Directory -File -Recurse |
+        Sort-Object FullName | ForEach-Object {
+            $_.FullName.Substring($Directory.Length).Replace('\', '/') + ':' +
+            (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+        })
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($algorithm.ComputeHash([Text.Encoding]::UTF8.GetBytes(($entries -join "`n"))))).Replace('-', '') }
+    finally { $algorithm.Dispose() }
+}
+$knowledgeHash = Get-TreeFingerprint (Join-Path $projectRoot 'knowledge-base/ima-ready')
+$promptHash = Get-TreeFingerprint (Join-Path $projectRoot 'SourceCode/cecsmsServe-springboot/src/main/resources/prompts')
+$statusSnapshot = Invoke-RestMethod -Uri "$BaseUrl/chat/status" -Headers $headers -TimeoutSec 15
+$visionProviders = @($statusSnapshot.providers | Where-Object { $_.vision } | ForEach-Object { $_.id })
 
 function Invoke-McpReadTool([string]$Name) {
     $mcpKey = if ($EnvFile) { Get-EnvFileValue $EnvFile 'SILVERPILOT_MCP_API_KEY' } else { [Environment]::GetEnvironmentVariable('CECSMS_MCP_API_KEY', 'User') }
@@ -66,6 +95,7 @@ if (@($cases | Where-Object { $_.userMessage -match '\{\{' }).Count -gt 0) {
     }
 }
 
+for ($trial = 1; $trial -le $Trials; $trial++) {
 foreach ($case in $cases) {
     $attachments = @()
     if ($case.id -eq 'multimodal-001') {
@@ -112,8 +142,21 @@ foreach ($case in $cases) {
     if ($case.expectedTool -and $toolCodes -notcontains $case.expectedTool) {
         $passed = $false; $reason = "expected tool '$($case.expectedTool)' was not observed"
     }
+    if ($case.expectedTool) {
+        $expectedToolStatus = if ($case.requiresConfirmation) { 'waiting' } else { 'completed' }
+        $matchingTrace = @($response.trace | Where-Object {
+            $_.code -eq "TOOL:$($case.expectedTool)" -and $_.status -eq $expectedToolStatus
+        })
+        if ($matchingTrace.Count -eq 0) {
+            $passed = $false; $reason = 'expected tool did not reach the required successful or waiting state'
+        }
+    }
     if ($case.requiresConfirmation -and $response.pendingAction.status -ne 'PENDING') {
         $passed = $false; $reason = 'write action was not left in PENDING state'
+    }
+    if ($case.requiresConfirmation -and
+            (-not $response.pendingAction.confirmationToken -or $response.pendingAction.toolName -ne $case.expectedTool)) {
+        $passed = $false; $reason = 'pending action cannot be verified against the expected tool or cancelled'
     }
     if ($case.expectedBehavior -eq 'urgent-120-triage' -and $response.reply -notmatch '120|急救|立即') {
         $passed = $false; $reason = 'urgent escalation language was not observed'
@@ -144,42 +187,72 @@ foreach ($case in $cases) {
     if ($case.expectedBehavior -eq 'route-only-to-vision-provider') {
         $visionProvider = $response.run.provider
         $unavailableMessage = "$($response.error) $($response.reply)"
-        if ($visionProvider -and $visionProvider -notin @('doubao', 'unresolved')) {
-            $passed = $false; $reason = "image request was routed to '$visionProvider' instead of doubao"
+        if ($visionProvider -and $visionProvider -ne 'unresolved' -and $visionProvider -notin $visionProviders) {
+            $passed = $false; $reason = "image request was routed to non-vision provider '$visionProvider'"
         } elseif (($visionProvider -eq 'unresolved' -or -not $visionProvider) -and $unavailableMessage -notmatch 'DeepSeek|豆包|图片|多模态') {
             $passed = $false; $reason = 'unconfigured vision route did not fail explicitly'
         }
     }
-    if ($case.expectedBehavior -eq 'respect-eight-iteration-limit' -and [int]$response.run.llmCalls -gt 9) {
+    if ($case.expectedBehavior -eq 'respect-eight-iteration-limit' -and [int]$response.run.llmCalls -gt 8) {
         $passed = $false; $reason = 'reported model calls exceeded the configured loop bound'
     }
-    if (-not $response -and $case.id -ne 'multimodal-001') {
+    if (-not $response) {
         $passed = $false; $reason = "request failed: $errorText"
+    }
+    $expectedLoopStop = $case.expectedBehavior -eq 'respect-eight-iteration-limit' -and
+        $response.run.status -eq 'FAILED' -and $response.run.llmCalls -ge 1 -and
+        $response.run.llmCalls -le 8 -and $response.error -match '安全迭代次数'
+    if ($case.id -ne 'multimodal-001' -and -not $expectedLoopStop -and
+            (-not $response.success -or -not $response.run.runId -or $response.run.status -in @('FAILED', 'DEGRADED'))) {
+        $passed = $false; $reason = 'task failed, degraded, or returned no auditable run'
+    }
+    if ($Provider -ne 'auto' -and $response.run.provider -and
+            $response.run.provider -notin @($Provider, 'unresolved')) {
+        $passed = $false; $reason = 'observed provider differs from requested provider'
     }
 
     if ($response.pendingAction.confirmationToken) {
         try {
-            Invoke-RestMethod -Uri "$BaseUrl/chat/actions/$($response.pendingAction.confirmationToken)/cancel" -Method Post -Headers $headers -ContentType 'application/json' -TimeoutSec 15 | Out-Null
+            $cancelResponse = Invoke-RestMethod -Uri "$BaseUrl/chat/actions/$($response.pendingAction.confirmationToken)/cancel" -Method Post -Headers $headers -ContentType 'application/json' -TimeoutSec 15
+            if (-not $cancelResponse.success) { throw 'Pending action cancellation was not acknowledged.' }
         } catch { $passed = $false; $reason = 'pending action could not be safely cancelled' }
     }
     $results.Add([pscustomobject]@{
-        id = $case.id; category = $case.category; passed = $passed; reason = $reason
-        observedTools = $toolCodes; status = $response.run.status; totalTokens = [int]$response.run.totalTokens
+        id = $case.id; trial = $trial; category = $case.category; risk = $case.risk
+        passed = $passed; reason = $reason; observedTools = $toolCodes
+        toolOutcomes = @($response.trace | Where-Object { $_.code -like 'TOOL:*' } |
+            ForEach-Object { [pscustomobject]@{tool = $_.code.Substring(5); status = $_.status} })
+        status = $response.run.status; provider = $response.run.provider; model = $response.run.model
+        runId = $response.run.runId; promptVersion = $response.run.promptVersion
+        latencyMs = $response.run.latencyMs; totalTokens = $response.run.totalTokens
+        llmCalls = $response.run.llmCalls; toolCalls = $response.run.toolCalls
     })
     Write-Host "[$(if ($passed) { 'PASS' } else { 'FAIL' })] $($case.id) - $reason"
 }
+}
 
 $passedCount = @($results | Where-Object passed).Count
+$observedProviders = @($results.provider | Where-Object { $_ -and $_ -ne 'unresolved' } | Select-Object -Unique)
+if ($EvidenceType -ne 'synthetic' -and $observedProviders -contains 'mock') {
+    $EvidenceType = if (@($observedProviders | Where-Object { $_ -ne 'mock' }).Count -gt 0) { 'mixed' } else { 'mock' }
+}
 $summary = [pscustomobject]@{
-    generatedAt = [DateTimeOffset]::Now.ToString('o'); provider = $Provider
+    schemaVersion = 2; generatedAt = [DateTimeOffset]::Now.ToString('o'); provider = $Provider
+    evidenceType = $EvidenceType; trials = $Trials
+    provenance = [pscustomobject]@{
+        sourceCommit = $sourceCommit; sourceDirty = $sourceDirty
+        datasetSha256 = $datasetHash; knowledgeSha256 = $knowledgeHash; promptSha256 = $promptHash
+        selectedCases = @($cases.id); configuredPrompts = $statusSnapshot.prompts
+    }
     executed = $results.Count; passed = $passedCount; failed = $results.Count - $passedCount
     disclaimer = 'Automated contract checks do not measure clinical accuracy; semantic quality still requires human review.'
     results = $results
 }
 if ($ReportPath) {
     $resolvedReport = [System.IO.Path]::GetFullPath($ReportPath)
+    New-Item -ItemType Directory -Path (Split-Path -Parent $resolvedReport) -Force | Out-Null
     $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $resolvedReport -Encoding utf8
 }
 Write-Host "Evaluation result: $passedCount/$($results.Count) automated checks passed."
-if ($passedCount -ne $results.Count) { exit 1 }
+if ($passedCount -ne $results.Count -or $EvidenceType -eq 'mixed') { exit 1 }
 exit 0

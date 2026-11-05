@@ -15,7 +15,7 @@ import java.util.Map;
         matchIfMissing = true)
 public class DatabaseContractHealthIndicator extends AbstractHealthIndicator {
 
-    static final int REQUIRED_TABLE_COUNT = 21;
+    static final int REQUIRED_TABLE_COUNT = 23;
     static final int REQUIRED_INDEX_COUNT = 6;
     static final int REQUIRED_FOREIGN_KEY_COUNT = 18;
 
@@ -25,7 +25,7 @@ public class DatabaseContractHealthIndicator extends AbstractHealthIndicator {
             WHERE table_schema = DATABASE()
               AND table_type = 'BASE TABLE'
               AND table_name IN (
-                'activity','activity_state','activity_type','agent_action','agent_run',
+                'activity','activity_state','activity_type','agent_action','agent_run','agent_feedback','agent_feedback_event',
                 'comment','emergency_help','message','message_receiver','news','order_state',
                 'recipe','recipe_order','report','role','role_function','service_order',
                 'service_type','sys_function','user','user_activity'

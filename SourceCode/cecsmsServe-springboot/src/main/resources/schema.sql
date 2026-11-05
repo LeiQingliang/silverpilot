@@ -45,3 +45,33 @@ CREATE TABLE IF NOT EXISTS agent_run (
     KEY idx_agent_run_user_created (user_id, created_at),
     KEY idx_agent_run_created_status (created_at, status)
 );
+CREATE TABLE IF NOT EXISTS agent_feedback (
+    feedback_id CHAR(32) NOT NULL,
+    run_id CHAR(32) NOT NULL,
+    category VARCHAR(32) NOT NULL,
+    priority VARCHAR(2) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    owner_id INT NOT NULL,
+    change_ref VARCHAR(80) NULL,
+    evidence_ref VARCHAR(85) NULL,
+    version INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    verified_at DATETIME NULL,
+    PRIMARY KEY (feedback_id),
+    KEY idx_agent_feedback_created (created_at),
+    KEY idx_agent_feedback_run (run_id)
+);
+
+CREATE TABLE IF NOT EXISTS agent_feedback_event (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    feedback_id CHAR(32) NOT NULL,
+    from_status VARCHAR(20) NULL,
+    to_status VARCHAR(20) NOT NULL,
+    actor_id INT NOT NULL,
+    change_ref VARCHAR(80) NULL,
+    evidence_ref VARCHAR(85) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_agent_feedback_event (feedback_id, created_at)
+);

@@ -1,9 +1,19 @@
 {
   "name": "SilverPilot ima-ready knowledge pack",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "owner": "qinglianglei",
   "reviewedAt": "2026-08-18",
-  "runtimePolicy": "Only Markdown documents with status=approved are indexed",
+  "maintenanceUpdatedAt": "2026-11-06",
+  "runtimePolicy": "Only status=approved documents with valid reviewed_at <= current Asia/Shanghai date <= next_review_at are indexed; draft and governance are excluded",
+  "pendingReviews": [
+    {
+      "documentId": "KB-HEALTH-001",
+      "path": "ima-ready/04-健康问答安全边界.md",
+      "status": "draft",
+      "quarantinedAt": "2026-11-06",
+      "reason": "Review expired on 2026-10-18; professional content review and external ima removal verification remain pending. Original review dates are preserved."
+    }
+  ],
   "documents": [
     "ima-ready/00-知识库治理规范.md",
     "ima-ready/01-产品与业务边界.md",

@@ -46,6 +46,11 @@ jobs:
         shell: pwsh
         run: ./scripts/install-pinned-npm.ps1
 
+      - name: Set up Python for operations analysis tests
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
       - name: Install frontend dependencies
         shell: pwsh
         working-directory: SourceCode/cecsmsui-vue

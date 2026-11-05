@@ -1,22 +1,23 @@
 # SilverPilot 大模型接入与 API 配置实战
 
-> 适用范围：当前仓库（Java 25、Spring Boot 4.1、Vue 3），文档按 2026-08-19 的源码与厂商官方接口核对。
+> 适用范围：当前仓库（Java 25、Spring Boot 4.1、Vue 3）。LongCat 适配于 2026-11-06 按官方 Responses API 文档实现；其他厂商参考表保留历史配置口径，实际模型可用性以账号和厂商最新文档为准。
 >
 > 本文中的 Key 全是占位符。真实 Key 只能放在本机被 Git 忽略的配置、CI Secret 或云密钥管理服务中，不能写入本文、源码、前端 `VITE_*` 变量、截图、日志或提交记录。
 
 ## 1. 先看结论
 
-当前项目已经真正接通并注册了 3 个 Provider ID：
+当前源码实现并注册了 4 个 Provider ID；配置存在、协议测试通过与真实账号联调通过是不同的证据：
 
 | Provider ID | 当前状态 | 文本 | 工具调用 | JSON 照护方案 | 图片 |
 | --- | --- | --- | --- | --- | --- |
 | `deepseek` | 已实现，只需配置 Key | 是 | 是 | 是 | 否 |
 | `doubao` | 已实现，需配置 Key 和模型/Endpoint ID | 是 | 是 | 是 | 是 |
+| `longcat` | Responses 适配器已实现；真实账号联调待完成 | 是 | 是，适配为现有工具契约 | 是，后端继续校验 | 当前未启用 |
 | `mock` | 已实现，默认关闭 | 确定性模拟 | 仅本地只读路由 | 不代替真实模型评测 | 否 |
 
 `auto` 的当前路由规则是：
 
-- 纯文本：DeepSeek → 豆包 → 显式启用的 Mock；
+- 纯文本：DeepSeek → 豆包 → LongCat → 显式启用的 Mock；模型对照请显式选择 Provider，避免自动路由混淆结果；
 - 带图片：只选择已配置的豆包；
 - 所有写操作：模型只能创建 `PENDING` 动作，用户确认后才执行。
 
@@ -26,7 +27,7 @@ OpenAI、通义千问、智谱 GLM、Kimi、Gemini、腾讯混元、百度千帆
 
 SilverPilot 不是只调用一次模型的聊天页。一个可用于本项目的模型/端点至少要同时满足：
 
-1. 接受非流式 `POST /chat/completions`；
+1. 接受非流式模型请求，或由专用适配器转换厂商协议；LongCat 使用 `POST /openai/v1/responses`；
 2. 接受 `system/user/assistant/tool` 消息；
 3. 支持 OpenAI 风格 `tools`、`tool_choice` 和 `tool_calls`；
 4. 照护方案场景支持 `response_format={"type":"json_object"}`，或由专用适配器提供等价的结构化输出保证；
@@ -41,7 +42,7 @@ Vue AiChat.vue
     -> POST /chat 或 POST /chat/care-plan
     -> ChatController：鉴权、输入校验、图片校验、安全预检
     -> AiProviderService：选择 Provider、装饰请求体、统计 Token
-    -> DeepSeekClient / DoubaoClient：后端携带 Key 请求厂商 API
+    -> DeepSeekClient / DoubaoClient / LongCatClient：后端携带 Key 请求厂商 API
     -> ToolExecutor：执行真实业务只读工具或创建待确认写操作
     -> AgentRunService：记录模型、延迟、Token、工具轨迹和状态
 ```
@@ -52,6 +53,7 @@ Vue AiChat.vue
 | `SourceCode/cecsmsServe-springboot/src/main/java/com/cecsmsserve/service/AiProviderService.java` | Provider 白名单、自动路由、请求体、能力状态 |
 | `SourceCode/cecsmsServe-springboot/src/main/java/com/cecsmsserve/service/DeepSeekClient.java` | DeepSeek HTTP、Bearer 鉴权、重试和错误转换 |
 | `SourceCode/cecsmsServe-springboot/src/main/java/com/cecsmsserve/service/DoubaoClient.java` | 火山方舟/豆包 HTTP 客户端 |
+| `SourceCode/cecsmsServe-springboot/src/main/java/com/cecsmsserve/service/LongCatClient.java` | LongCat Responses 请求/响应转换、工具回填、Token 映射与错误处理 |
 | `SourceCode/cecsmsServe-springboot/src/main/java/com/cecsmsserve/controller/ChatController.java` | `/chat`、Provider 参数校验、工具循环和图片协议 |
 | `SourceCode/cecsmsServe-springboot/src/main/java/com/cecsmsserve/service/CareRecommendationService.java` | JSON 照护方案及真实服务 ID/来源校验 |
 | `SourceCode/cecsmsui-vue/src/components/front/ai/AiChat.vue` | 从 `/chat/status` 动态显示可用 Provider |
@@ -60,9 +62,9 @@ Vue AiChat.vue
 | `compose.yaml` | 将 `SILVERPILOT_*` 映射到后端容器 |
 | `scripts/docker-dev.ps1` | 生成本机配置、刷新 IDEA host profile、启动/重建容器 |
 
-项目没有引入 Spring AI 或 LangChain4j；当前使用 Spring `RestClient` 直接调用 Chat Completions。为了最小改动，新增同协议厂商时继续复用这一契约更快；若要迁移 Responses API 或厂商原生协议，应建立独立适配器，不要在现有客户端里混杂多套响应格式。
+项目没有引入 Spring AI 或 LangChain4j；使用 Spring `RestClient`。DeepSeek、豆包使用 Chat Completions，LongCat 使用独立 Responses 适配器。上层继续接收统一的消息、工具调用和 Token 结果，业务权限与人工确认仍由原来的后端执行链负责。
 
-## 3. 零改代码：配置现有 DeepSeek、豆包或 Mock
+## 3. 零改代码：配置现有 DeepSeek、豆包、LongCat 或 Mock
 
 ### 3.1 Key 与模型 ID 的准备原则
 
@@ -114,7 +116,25 @@ SILVERPILOT_AI_MOCK_ENABLED=true
 
 Mock 不会进行真实语义推理、图片理解或虚构写操作成功，不能用它证明真实模型效果。
 
-### 3.3 Local/IDEA 模式应用配置
+### 3.3 LongCat：独立模型通道
+
+在根目录被忽略的 `.env.docker` 中配置：
+
+```dotenv
+SILVERPILOT_LONGCAT_API_URL=https://api.longcat.chat/openai/v1/responses
+SILVERPILOT_LONGCAT_API_KEY=<只在本机粘贴 LongCat API Key>
+SILVERPILOT_LONGCAT_MODEL=LongCat-2.5
+```
+
+不需要把 LongCat 密钥放进 DeepSeek 槽位。前端选择 `LongCat · 美团`；直接调用后端时使用 `provider: "longcat"`。官方当前的模型名与工具协议见 [Responses API](https://longcat.ai/platform/docs/zh/api/responses)，账号可用模型见 [Models API](https://longcat.ai/platform/docs/zh/api/models)。
+
+适配器将内部 Chat 风格的工具定义转换为 Responses 平级函数定义，将工具调用与结果转换为 `function_call` / `function_call_output`，再把返回消息、工具和用量映射回统一契约。JSON 照护导航通过 `text.format` 请求 JSON；现有服务 ID、来源和字段校验继续生效。项目只启用文本链路，图片仍交给豆包。
+
+每次请求发送完整的当前任务历史，不使用跨会话响应 ID；请求 `store=false`、`reasoning.effort=none`，输出长度沿用应用上限。模型返回的私有推理内容不会进入会话、审计或下一轮请求。截断、失败或畸形响应不会交给业务工具执行。429、5xx 和连接问题最多按配置重试，401/403 不重试，不向客户端泄露上游错误正文。
+
+**当前验收边界：**本仓库提供本机 HTTP 桩测试，覆盖真实 HTTP 序列化、两轮工具回填、JSON 参数、Token、错误与人工确认边界；这不代表 LongCat 线上账号、费用、延迟、语义效果或供应商数据保留政策已经验证。当前没有 LongCat 账号或密钥时，不产生真实模型评测结果，也不把历史 DeepSeek `16/16` 当作 LongCat 成绩。取得账号后先用合成演示数据验证实际接口对请求参数的接受情况，再运行固定评测集。
+
+### 3.4 Local/IDEA 模式应用配置
 
 在项目根目录执行：
 
@@ -138,7 +158,7 @@ SourceCode/cecsmsServe-springboot/config/application-host.properties
 
 它会生成/恢复 `.env.docker`、准备外置 host profile，并只启动本项目所需的 Docker Redis。宿主机 MySQL、IDEA 后端和前端仍按现有部署文档启动。
 
-### 3.4 全 Docker 模式应用配置
+### 3.5 全 Docker 模式应用配置
 
 第一次启动：
 
@@ -154,12 +174,12 @@ SourceCode/cecsmsServe-springboot/config/application-host.properties
 
 `restart` 会重建容器以重新注入环境变量，但保留命名卷。不要为了换模型运行 `reset -Force`；该命令会删除数据库、Redis 和上传卷。
 
-### 3.5 两组变量不要混用
+### 3.6 两组变量不要混用
 
-| 场景 | DeepSeek | 豆包 |
-| --- | --- | --- |
-| 根目录 `.env.docker` | `SILVERPILOT_DEEPSEEK_API_KEY/MODEL/THINKING_ENABLED` | `SILVERPILOT_DOUBAO_API_KEY/MODEL` |
-| 直接启动 Spring 进程 | `DEEPSEEK_API_URL/API_KEY/MODEL/THINKING_ENABLED` | `DOUBAO_API_URL/API_KEY/MODEL` |
+| 场景 | DeepSeek | 豆包 | LongCat |
+| --- | --- | --- | --- |
+| 根目录 `.env.docker` | `SILVERPILOT_DEEPSEEK_API_KEY/MODEL/THINKING_ENABLED` | `SILVERPILOT_DOUBAO_API_KEY/MODEL` | `SILVERPILOT_LONGCAT_API_URL/API_KEY/MODEL` |
+| 直接启动 Spring 进程 | `DEEPSEEK_API_URL/API_KEY/MODEL/THINKING_ENABLED` | `DOUBAO_API_URL/API_KEY/MODEL` | `LONGCAT_API_URL/API_KEY/MODEL` |
 
 `SourceCode/cecsmsServe-springboot/.env.example` 只是说明，Spring Boot 不会自动加载它。
 
@@ -204,7 +224,7 @@ $health.status
 
 ```powershell
 Set-Location .\SourceCode\cecsmsServe-springboot
-.\mvnw.cmd "-Dtest=AiProviderServiceTests,DeepSeekClientTests,CareRecommendationServiceTests,ChatControllerImageValidationTests" test
+.\mvnw.cmd "-Dtest=AiProviderServiceTests,DeepSeekClientTests,LongCatClientTests,CareRecommendationServiceTests,ChatControllerImageValidationTests" test
 Set-Location ..\..
 ```
 
@@ -214,12 +234,15 @@ Set-Location ..\..
 .\scripts\smoke-agent.ps1 -EnvFile .\.env.docker
 ```
 
-当前脚本明确选择 `deepseek`，因此只在 DeepSeek 已配置时运行。该脚本会写入 Agent 审计记录，并创建后立即取消一条本地待确认动作；只应在本地测试库执行，不要直接对生产库运行。豆包或以后新增的通用 Provider 使用下一条带 `-Provider` 参数的评测命令。
+当前脚本明确选择 `deepseek`，因此只在 DeepSeek 已配置时运行。该脚本会写入 Agent 审计记录，并创建后立即取消一条本地待确认动作；只应在本地测试库执行，不要直接对生产库运行。豆包、LongCat 或以后新增的通用 Provider 使用下一条带 `-Provider` 参数的评测命令。
 
 小批量在线评测：
 
 ```powershell
 .\scripts\run-agent-evaluation.ps1 -EnvFile .\.env.docker -Provider auto -MaxCases 6
+
+# 仅在 LongCat 账号配置并完成实际接口冒烟后运行；不会复用 DeepSeek 的历史报告。
+.\scripts\run-agent-evaluation.ps1 -EnvFile .\.env.docker -Provider longcat -MaxCases 6
 ```
 
 评测会产生真实模型费用、Agent 运行记录和受控的待确认/取消记录。通过它只能证明工程契约，不代表医疗有效性、生产稳定性或商业效果。
@@ -299,7 +322,7 @@ generic.api.read-timeout=${GENERIC_LLM_READ_TIMEOUT:90s}
 2. 客户端必须接收“完整请求地址”，继续返回 `Map<String,Object>`；响应仍按 `choices[0].message`、`tool_calls` 和 `usage` 解析。
 3. 在 `AiProviderService` 增加固定 ID `GENERIC="generic"`、客户端依赖、`resolve` 分支、`chatCompletion` switch、`statuses()` 项和 `ProviderSelection`。重写当前 `needsVision` 分支：显式请求 `generic` 时只有 `GENERIC_LLM_VISION=true` 才能接图片；`auto` 也只能在该能力为真时选择它。
 4. 通用请求体只保留标准字段：`model/messages/tools/tool_choice/stream/temperature/max_tokens/user/response_format`。不要加入 DeepSeek 专属 `thinking`、`user_id`，也不要擅自传其他厂商扩展字段。
-5. 把 `ChatController.ChatRequest` 和 `CarePlanRequest` 的 Provider 校验从 `auto|deepseek|doubao|mock` 扩展为包含 `generic`；更好的长期做法是改为由 `AiProviderService` 统一校验，避免两处白名单漂移。
+5. 把 `ChatController.ChatRequest` 和 `CarePlanRequest` 的 Provider 校验从 `auto|deepseek|doubao|longcat|mock` 扩展为包含 `generic`；更好的长期做法是改为由 `AiProviderService` 统一校验，避免两处白名单漂移。
 6. 在 `application.properties`、后端 `.env.example`、根 `.env.docker.example`、`compose.yaml` 和 `scripts/docker-dev.ps1` 的 host profile 写入逻辑中贯通全部 `GENERIC_LLM_*` 变量。
 7. 给 `AiProviderServiceTests`、新 Client 测试、`CareRecommendationServiceTests` 和 Controller Provider 校验补用例。
 8. 重启后端，前端会从 `/chat/status` 动态读取新 Provider；通常不需要把厂商名硬编码进 Vue。
@@ -400,7 +423,7 @@ AiProviderService
 | 写操作 | 只能创建 `PENDING`；未确认不改变业务数据 |
 | 错误 | 401、403、429、5xx、DNS、超时均转换为稳定且不泄密的错误 |
 | 成本 | `usage.prompt_tokens/completion_tokens/total_tokens` 能记录；缺失 usage 时不能假装成本已统计 |
-| 回归 | DeepSeek、豆包、Mock、自动路由和本地知识降级行为不受影响 |
+| 回归 | DeepSeek、豆包、LongCat、Mock、自动路由和本地知识降级行为不受影响 |
 
 建议增加一个新 Client 测试类，至少模拟：200 文本、200 tool call、401、429 后重试、500 后重试、空响应、畸形 `choices`、超时和 Key 缺失。
 

@@ -18,7 +18,7 @@ $repositoryImageRoot = [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'im
 $schemaName = 'qa_seed_' + [Guid]::NewGuid().ToString('N')
 $remoteSeedFile = "/tmp/$schemaName.sql"
 $requiredTables = @(
-    'activity', 'activity_state', 'activity_type', 'agent_action', 'agent_run',
+    'activity', 'activity_state', 'activity_type', 'agent_action', 'agent_run', 'agent_feedback', 'agent_feedback_event',
     'comment', 'emergency_help', 'message', 'message_receiver', 'news', 'order_state',
     'recipe', 'recipe_order', 'report', 'role', 'role_function', 'service_order',
     'service_type', 'sys_function', 'user', 'user_activity'
@@ -80,7 +80,7 @@ try {
     Write-Host "[PASS] Imported the SQL seed into disposable schema $schemaName." -ForegroundColor Green
 
     $quotedTables = ($requiredTables | ForEach-Object { "'$_'" }) -join ','
-    Assert-Scalar 'Required base-table contract' "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND table_name IN ($quotedTables);" '21'
+    Assert-Scalar 'Required base-table contract' "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND table_name IN ($quotedTables);" ([string]$requiredTables.Count)
     $dateColumns = @(Invoke-SchemaSql @'
 SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS
 WHERE TABLE_SCHEMA=DATABASE() AND DATA_TYPE IN ('date','datetime','timestamp','year')
@@ -190,7 +190,7 @@ SELECT `image` FROM `service_type` WHERE `image` IS NOT NULL AND `image` <> '';
             throw "CHECK TABLE reported a failure: $row"
         }
     }
-    Write-Host '[PASS] MySQL CHECK TABLE reported OK for all 21 required tables.' -ForegroundColor Green
+    Write-Host "[PASS] MySQL CHECK TABLE reported OK for all $($requiredTables.Count) required tables." -ForegroundColor Green
 } finally {
     try {
         Invoke-MySql "DROP DATABASE IF EXISTS ``$schemaName``;" | Out-Null

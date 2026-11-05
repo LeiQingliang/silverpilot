@@ -20,7 +20,7 @@
   <a href="runtime-versions.json"><img alt="Source baseline 1.0.1 plus Unreleased" src="https://img.shields.io/badge/source-1.0.1%20%2B%20Unreleased-5B5BD6?style=flat-square" /></a>
   <a href="SourceCode/cecsmsServe-springboot/pom.xml"><img alt="Java 25 LTS" src="https://img.shields.io/badge/Java-25%20LTS-ED8B00?style=flat-square&amp;logo=openjdk&amp;logoColor=white" /></a>
   <a href="SourceCode/cecsmsServe-springboot/pom.xml"><img alt="Spring Boot 4.1.1" src="https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?style=flat-square&amp;logo=springboot&amp;logoColor=white" /></a>
-  <a href="SourceCode/cecsmsui-vue/package.json"><img alt="Vue 3.5.41" src="https://img.shields.io/badge/Vue-3.5.41-42B883?style=flat-square&amp;logo=vuedotjs&amp;logoColor=white" /></a>
+  <a href="SourceCode/cecsmsui-vue/package.json"><img alt="Vue 3.5.42" src="https://img.shields.io/badge/Vue-3.5.42-42B883?style=flat-square&amp;logo=vuedotjs&amp;logoColor=white" /></a>
 </p>
 
 <p align="center">
@@ -82,6 +82,8 @@ https://github.com/user-attachments/assets/65eecf9c-077e-4c51-855c-c71717d7780a
 README 负责给出最短成功路径和模块边界；架构、安全、部署及时间点证据放在 `docs/`。遇到数字或版本冲突时，以源码、锁文件、`runtime-versions.json` 和本次实际命令输出为准。
 
 ## 项目概览
+
+**AI 运营实践扩展：**新增 LongCat 独立模型适配、CatPaw 可导入运营技能、匿名指标导出、反馈修复与复测流程，以及知识到期隔离。实现与验证边界见 [CatPaw / LongCat 实践](catpaw/README.md)、[运营流程](docs/AI_OPERATIONS_WORKFLOW.md)和[项目案例](portfolio/MEITUAN_AI_OPERATIONS_CASE.md)。真实 LongCat 账号效果与 CatPaw 客户端接入仍需单独验证。
 
 SilverPilot 将传统智慧养老管理系统升级为“可查询、可规划、可执行、可审计”的业务 Agent。模型负责理解用户目标、规划步骤和选择工具；Spring Boot 后端负责身份、权限、参数、业务事实与最终执行。活动报名、服务预约、助餐预订及取消等写操作，必须先进入 `PENDING`，再由当前用户二次确认。
 
@@ -420,7 +422,7 @@ IDEA profile、VSCode 脚本和故障排查分别见[后端 README](SourceCode/c
 | 后端 | Java 25 LTS、Spring Boot 4.1.1、MyBatis-Plus 3.5.17、Bean Validation、java-jwt 4.6.0、EasyExcel 4.0.3 |
 | 数据 | MySQL 9.7.2 LTS、Connector/J 26.7.0、Redis 8.2.9 Extended、HikariCP、幂等迁移 |
 | AI | DeepSeek Chat Completions、火山方舟/豆包 Vision、显式 Mock、结构化输出、受控 Markdown RAG |
-| 前端 | Vue 3.5.41、Vue Router 5.2.0、Vite 8.2.1、Element Plus 2.14.4、Pinia 4.0.3、Axios 1.19.0、ECharts 6.1.0 |
+| 前端 | Vue 3.5.42、Vue Router 5.2.0、Vite 8.2.4、Element Plus 2.14.4、Pinia 4.0.3、Axios 1.20.0、ECharts 6.1.0 |
 | 工程 | Maven 3.9.16、Node.js 24.19.0、npm 12.0.2、ESLint 10.8.1、Knip 6.32.2、Dependency-Check 13.0.0 |
 | 容器 | Eclipse Temurin 25、Nginx 1.30.4 stable、Ubuntu 26.04 LTS、Alpine 3.24.1、Go 1.27.0 |
 
@@ -435,7 +437,7 @@ SilverPilot 把“实时业务事实”和“稳定规则知识”分成两个�
 | WorkBuddy MCP | 平台概况、活动、服务、菜谱、审核知识、匿名聚合 Agent 指标 | 个人健康数据、个人订单、任何业务写操作 |
 | ima 知识库 | 产品边界、安全策略、养老业务 SOP、健康问答边界、运营口径 | 当前数据库实时状态、未经审核的 AI 产出 |
 
-仓库提供 [`agent-manifest.json`](workbuddy/agent-manifest.json)、[`connector-template.json`](workbuddy/connector-template.json)、[SilverPilot Operator Skill](.codebuddy/skills/silverpilot-operator/SKILL.md) 与 9 篇 `ima-ready` Markdown，其中 8 篇为运行时 `approved`。本地 MCP 地址是 `http://127.0.0.1:8083/mcp`，使用独立 API Key。
+仓库提供 [`agent-manifest.json`](workbuddy/agent-manifest.json)、[`connector-template.json`](workbuddy/connector-template.json)、[SilverPilot Operator Skill](.codebuddy/skills/silverpilot-operator/SKILL.md) 与 9 篇 `ima-ready` Markdown。当前 7 篇为 `approved`，另有 1 篇治理文档和 1 篇待复核健康草稿；运行时还会检查审核有效期。历史 8 篇快照不代表当前可用知识数。本地 MCP 地址是 `http://127.0.0.1:8083/mcp`，使用独立 API Key。
 
 同机桌面联调可以使用回环地址；云端 Runtime 无法访问用户电脑的 `127.0.0.1`，必须先部署受保护的 HTTPS MCP，并配置网关限流、来源限制、密钥轮换和审计。仓库模板不等于 WorkBuddy 云端已绑定、ima 已授权或企业 Agent 已发布。完整步骤见 [WorkBuddy + ima 接入指南](docs/WORKBUDDY_IMA_QUICKSTART.md)。
 
