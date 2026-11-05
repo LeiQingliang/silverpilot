@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 @Service
 public class AgentRunService {
@@ -88,14 +89,17 @@ public class AgentRunService {
         LambdaQueryWrapper<AgentRun> query = new LambdaQueryWrapper<AgentRun>()
                 .ge(AgentRun::getCreatedAt, LocalDateTime.now().minusDays(days))
                 .orderByDesc(AgentRun::getId)
-                .last("LIMIT 5000");
+                .last("LIMIT 5001");
         if (userId != null) query.eq(AgentRun::getUserId, userId);
         return mapper.selectList(query);
     }
 
     private AnalyticsView calculate(List<AgentRun> runs, int requestedDays) {
         int days = Math.max(1, Math.min(requestedDays, 30));
-        long successfulRuns = runs.stream().filter(run -> !FAILED.equals(run.getStatus())).count();
+        boolean truncated = runs.size() > 5000;
+        runs = runs.stream().limit(5000).toList();
+        long successfulRuns = runs.stream().filter(this::successful).count();
+        long completed = runs.stream().filter(run -> COMPLETED.equals(run.getStatus())).count();
         long waiting = runs.stream().filter(run -> WAITING_CONFIRMATION.equals(run.getStatus())).count();
         long degraded = runs.stream().filter(run -> DEGRADED.equals(run.getStatus())).count();
         long totalToolCalls = runs.stream().mapToLong(run -> number(run.getToolCalls())).sum();
@@ -108,13 +112,37 @@ public class AgentRunService {
 
         Map<String, Long> providers = new LinkedHashMap<>();
         Map<String, Long> modalities = new LinkedHashMap<>();
+        Map<String, Long> errors = new LinkedHashMap<>();
+        Map<String, List<AgentRun>> providerRuns = new LinkedHashMap<>();
         for (AgentRun run : runs) {
             providers.merge(value(run.getProvider(), "unknown"), 1L, Long::sum);
             modalities.merge(value(run.getInputModality(), "UNKNOWN"), 1L, Long::sum);
+            if (run.getErrorType() != null && !run.getErrorType().isBlank()) {
+                errors.merge(run.getErrorType(), 1L, Long::sum);
+            }
+            providerRuns.computeIfAbsent(value(run.getProvider(), "unknown"), key -> new ArrayList<>()).add(run);
         }
+        List<ProviderAnalytics> providerMetrics = providerRuns.entrySet().stream().map(entry -> {
+            List<AgentRun> items = entry.getValue();
+            return new ProviderAnalytics(entry.getKey(), items.size(),
+                    ratio(items.stream().filter(this::successful).count(), items.size()),
+                    percentile(items, 0.50), percentile(items, 0.95),
+                    items.stream().mapToLong(item -> number(item.getTotalTokens())).sum());
+        }).toList();
         List<RunView> recent = runs.stream().limit(8).map(this::toView).toList();
         return new AnalyticsView(days, runs.size(), successRate, averageLatency, totalToolCalls,
-                totalTokens, toolSuccessRate, waiting, degraded, providers, modalities, recent);
+                totalTokens, toolSuccessRate, waiting, degraded, providers, modalities, recent,
+                completed, runs.stream().filter(run -> FAILED.equals(run.getStatus())).count(),
+                percentile(runs, 0.50), percentile(runs, 0.95), truncated, 5000, errors, providerMetrics);
+    }
+
+    private boolean successful(AgentRun run) {
+        return COMPLETED.equals(run.getStatus()) || WAITING_CONFIRMATION.equals(run.getStatus());
+    }
+
+    private long percentile(List<AgentRun> runs, double quantile) {
+        long[] values = runs.stream().mapToLong(run -> number(run.getLatencyMs())).sorted().toArray();
+        return values.length == 0 ? 0 : values[(int) Math.ceil(quantile * values.length) - 1];
     }
 
     private RunView toView(AgentRun run) {
@@ -181,5 +209,11 @@ public class AgentRunService {
             int days, long totalRuns, double successRate, long averageLatencyMs, long toolCalls,
             long totalTokens, double toolSuccessRate, long waitingConfirmation, long degradedRuns,
             Map<String, Long> providers,
-            Map<String, Long> modalities, List<RunView> recentRuns) { }
+            Map<String, Long> modalities, List<RunView> recentRuns,
+            long completedRuns, long failedRuns, long p50LatencyMs, long p95LatencyMs,
+            boolean truncated, int sampleLimit, Map<String, Long> errors,
+            List<ProviderAnalytics> providerMetrics) { }
+
+    public record ProviderAnalytics(String provider, long runs, double successRate,
+                                    long p50LatencyMs, long p95LatencyMs, long totalTokens) { }
 }

@@ -186,6 +186,9 @@ function Ensure-EnvironmentFile {
                 SILVERPILOT_DEEPSEEK_THINKING_ENABLED = 'DEEPSEEK_THINKING_ENABLED'
                 SILVERPILOT_DOUBAO_API_KEY = 'DOUBAO_API_KEY'
                 SILVERPILOT_DOUBAO_MODEL = 'DOUBAO_MODEL'
+                SILVERPILOT_LONGCAT_API_URL = 'LONGCAT_API_URL'
+                SILVERPILOT_LONGCAT_API_KEY = 'LONGCAT_API_KEY'
+                SILVERPILOT_LONGCAT_MODEL = 'LONGCAT_MODEL'
             }
             foreach ($name in $providerVariables.Keys) {
                 $value = [Environment]::GetEnvironmentVariable($providerVariables[$name], 'User')
@@ -260,6 +263,9 @@ function Write-IdeaHostProfile {
     $deepseekThinking = Get-EnvironmentBoolean $values 'SILVERPILOT_DEEPSEEK_THINKING_ENABLED' 'false'
     $doubaoKey = Get-EnvironmentValueOrDefault $values 'SILVERPILOT_DOUBAO_API_KEY' ''
     $doubaoModel = Get-EnvironmentValueOrDefault $values 'SILVERPILOT_DOUBAO_MODEL' ''
+    $longcatUrl = Get-EnvironmentValueOrDefault $values 'SILVERPILOT_LONGCAT_API_URL' 'https://api.longcat.chat/openai/v1/responses'
+    $longcatKey = Get-EnvironmentValueOrDefault $values 'SILVERPILOT_LONGCAT_API_KEY' ''
+    $longcatModel = Get-EnvironmentValueOrDefault $values 'SILVERPILOT_LONGCAT_MODEL' 'LongCat-2.5'
     $hostDatabasePassword = Get-ScopedEnvironmentValue 'CECSMS_LOCAL_DB_PASSWORD'
     if ([string]::IsNullOrWhiteSpace($hostDatabasePassword)) {
         $hostDatabasePassword = Get-ScopedEnvironmentValue 'CECSMS_DB_PASSWORD'
@@ -295,6 +301,9 @@ function Write-IdeaHostProfile {
         "deepseek.api.thinking-enabled=$deepseekThinking"
         "doubao.api.key=$(ConvertTo-JavaPropertyValue $doubaoKey)"
         "doubao.api.model=$(ConvertTo-JavaPropertyValue $doubaoModel)"
+        "longcat.api.url=$(ConvertTo-JavaPropertyValue $longcatUrl)"
+        "longcat.api.key=$(ConvertTo-JavaPropertyValue $longcatKey)"
+        "longcat.api.model=$(ConvertTo-JavaPropertyValue $longcatModel)"
         # Do not inherit CECSMS_UPLOAD_DIR from another checkout. IDEA can use a
         # different working directory, so pin the writable media root explicitly.
         "file.image-base-path=$(ConvertTo-JavaPropertyValue $projectRoot)"

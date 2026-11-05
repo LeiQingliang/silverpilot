@@ -10,7 +10,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -33,14 +37,20 @@ public class KnowledgeBaseService {
 
     private final Path root;
     private final Duration cacheTtl;
+    private final Clock clock;
     private volatile CachedDocuments cache = new CachedDocuments(0, List.of());
 
     @Autowired
     public KnowledgeBaseService(
             @Value("${agent.knowledge-base-path:../../knowledge-base/ima-ready}") String rootPath,
             @Value("${agent.knowledge-cache-ttl:60s}") Duration cacheTtl) {
+        this(rootPath, cacheTtl, Clock.system(ZoneId.of("Asia/Shanghai")));
+    }
+
+    KnowledgeBaseService(String rootPath, Duration cacheTtl, Clock clock) {
         this.root = Path.of(rootPath).toAbsolutePath().normalize();
         this.cacheTtl = cacheTtl.isNegative() ? Duration.ZERO : cacheTtl;
+        this.clock = clock;
     }
 
     KnowledgeBaseService(String rootPath) {
@@ -91,18 +101,28 @@ public class KnowledgeBaseService {
         CachedDocuments current = cache;
         if (!current.documents().isEmpty()
                 && now - current.loadedAtNanos() < cacheTtl.toNanos()) {
-            return current.documents();
+            return currentDocuments(current.documents());
         }
         synchronized (this) {
             current = cache;
             if (!current.documents().isEmpty()
                     && now - current.loadedAtNanos() < cacheTtl.toNanos()) {
-                return current.documents();
+                return currentDocuments(current.documents());
             }
             List<Document> loaded = scanDocuments();
             cache = new CachedDocuments(now, loaded);
-            return loaded;
+            return currentDocuments(loaded);
         }
+    }
+
+    // Recheck on every request: a cached document must expire at the date boundary,
+    // even when its content cache has not reached its TTL.
+    private List<Document> currentDocuments(List<Document> documents) {
+        LocalDate today = LocalDate.now(clock);
+        return documents.stream()
+                .filter(document -> !document.reviewedAt().isAfter(today)
+                        && !document.nextReviewAt().isBefore(today))
+                .toList();
     }
 
     private List<Document> scanDocuments() {
@@ -133,13 +153,29 @@ public class KnowledgeBaseService {
             String raw = Files.readString(path, StandardCharsets.UTF_8);
             String title = frontmatterValue(raw, "title");
             String status = frontmatterValue(raw, "status");
-            if (title == null || !"approved".equalsIgnoreCase(status)) {
+            if (title == null || title.isBlank() || !"approved".equalsIgnoreCase(status)) {
+                return null;
+            }
+            LocalDate reviewedAt = reviewDate(frontmatterValue(raw, "reviewed_at"));
+            LocalDate nextReviewAt = reviewDate(frontmatterValue(raw, "next_review_at"));
+            if (reviewedAt == null || nextReviewAt == null || nextReviewAt.isBefore(reviewedAt)) {
+                log.warn("Skipping knowledge document with missing or invalid review dates: {}", path);
                 return null;
             }
             String sourceId = path.getFileName().toString().replaceFirst("(?i)\\.md$", "");
-            return new Document(sourceId, title, stripFrontmatter(raw));
+            return new Document(sourceId, title, stripFrontmatter(raw), reviewedAt, nextReviewAt);
         } catch (IOException ex) {
             log.warn("Unable to read knowledge document {}: {}", path, ex.getMessage());
+            return null;
+        }
+    }
+
+    private LocalDate reviewDate(String value) {
+        if (value == null || !value.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) return null;
+        try {
+            LocalDate parsed = LocalDate.parse(value);
+            return parsed.getYear() >= 1 ? parsed : null;
+        } catch (DateTimeParseException ex) {
             return null;
         }
     }
@@ -153,13 +189,15 @@ public class KnowledgeBaseService {
             return null;
         }
         String prefix = raw.substring(3, end);
+        String value = null;
         for (String line : prefix.split("\\R")) {
             int separator = line.indexOf(':');
             if (separator > 0 && line.substring(0, separator).trim().equalsIgnoreCase(key)) {
-                return line.substring(separator + 1).trim().replaceAll("^[\"']|[\"']$", "");
+                if (value != null) return null;
+                value = line.substring(separator + 1).trim().replaceAll("^[\"']|[\"']$", "");
             }
         }
-        return null;
+        return value;
     }
 
     private String stripFrontmatter(String raw) {
@@ -222,7 +260,8 @@ public class KnowledgeBaseService {
         return value == null ? "" : value.toLowerCase(Locale.ROOT).trim();
     }
 
-    private record Document(String sourceId, String title, String body) { }
+    private record Document(String sourceId, String title, String body,
+                            LocalDate reviewedAt, LocalDate nextReviewAt) { }
     private record ScoredDocument(Document document, int score) { }
     private record CachedDocuments(long loadedAtNanos, List<Document> documents) { }
 

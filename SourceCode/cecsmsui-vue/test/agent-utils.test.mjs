@@ -47,7 +47,9 @@ test('analytics and latency helpers provide bounded display values', () => {
   assert.deepEqual(normalizeAnalytics({ successRate: 120, totalRuns: '3', providers: { deepseek: 3 } }), {
     days: 7, totalRuns: 3, successRate: 100, averageLatencyMs: 0, toolCalls: 0,
     totalTokens: 0, degradedRuns: 0, toolSuccessRate: 0, waitingConfirmation: 0,
-    providers: { deepseek: 3 }, modalities: {}, recentRuns: []
+    providers: { deepseek: 3 }, modalities: {}, recentRuns: [],
+    completedRuns: 0, failedRuns: 0, p50LatencyMs: 0, p95LatencyMs: 0,
+    truncated: false, sampleLimit: 5000, providerMetrics: [], errors: {}
   })
   assert.equal(formatLatency(830), '830 ms')
   assert.equal(formatLatency(2450), '2.5 s')

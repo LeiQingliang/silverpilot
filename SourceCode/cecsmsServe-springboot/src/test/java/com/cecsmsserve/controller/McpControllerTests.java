@@ -15,9 +15,37 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class McpControllerTests {
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void metricsToolDoesNotExposePerUserRunHistory() throws Exception {
+        AgentRunService runs = mock(AgentRunService.class);
+        when(runs.systemAnalytics(7)).thenReturn(new AgentRunService.AnalyticsView(
+                7, 1, 100, 10, 1, 2, 100, 0, 0,
+                Map.of("longcat", 1L), Map.of("TEXT", 1L),
+                List.of(new AgentRunService.RunView("private-run", 98765, "longcat", "model",
+                        "TEXT", "COMPLETED", 10, 1, 1, false, 2, "v1", null)),
+                1, 0, 10, 10, false, 5000, Map.of(), List.of()));
+        JsonMapper json = JsonMapper.builder().build();
+        McpController controller = new McpController("secret-value", mock(ToolExecutor.class),
+                mock(AgentActionService.class), mock(KnowledgeBaseService.class), runs,
+                mock(AiProviderService.class), json);
+        ResponseEntity<Object> response = controller.handle(
+                Map.of("jsonrpc", "2.0", "id", 1, "method", "tools/call",
+                        "params", Map.of("name", "cecsms_get_agent_metrics", "arguments", Map.of("days", 7))),
+                "secret-value", null);
+        String serialized = json.writeValueAsString(response.getBody());
+        assertFalse(serialized.contains("private-run"));
+        assertFalse(serialized.contains("98765"));
+        assertFalse(serialized.contains("recentRuns"));
+        assertFalse(serialized.contains("userId"));
+        assertTrue(serialized.contains("totalRuns"));
+    }
 
     @Test
     void refusesMissingCredential() {

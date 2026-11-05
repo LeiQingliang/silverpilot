@@ -33,3 +33,5 @@ user.txt
 /security-reports/raw/
 /.scannerwork/
 *.sarif
+/.qa-artifacts/
+**/__pycache__/

@@ -1,9 +1,15 @@
 param(
     [string]$Endpoint = 'http://127.0.0.1:8083/mcp',
-    [string]$ApiKey = $env:CECSMS_MCP_API_KEY
+    [string]$ApiKey = $env:CECSMS_MCP_API_KEY,
+    [string]$EnvFile = ''
 )
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($ApiKey) -and $EnvFile) {
+    $keyLine = Get-Content -LiteralPath $EnvFile -Encoding utf8 |
+        Where-Object { $_ -match '^SILVERPILOT_MCP_API_KEY=' } | Select-Object -Last 1
+    if ($keyLine) { $ApiKey = $keyLine.Substring($keyLine.IndexOf('=') + 1).Trim() }
+}
 if ([string]::IsNullOrWhiteSpace($ApiKey)) {
     $ApiKey = [Environment]::GetEnvironmentVariable('CECSMS_MCP_API_KEY', 'User')
 }
