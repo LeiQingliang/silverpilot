@@ -35,7 +35,8 @@ LABEL org.opencontainers.image.title="SilverPilot Redis" \
 ENV REDIS_VERSION=${REDIS_VERSION} \
     REDIS_DOWNLOAD_SHA=${REDIS_DOWNLOAD_SHA}
 WORKDIR /data
-VOLUME ["/data"]
+# Railway mounts the persistent volume at /data through service settings.
+# Its builder rejects Dockerfile VOLUME directives.
 EXPOSE 6379
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["redis-server"]

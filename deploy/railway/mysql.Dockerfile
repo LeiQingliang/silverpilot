@@ -27,7 +27,8 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     MYSQL_DATABASE=a_old \
     MYSQL_USER=cecsms \
     TZ=Asia/Shanghai
-VOLUME ["/var/lib/mysql"]
+# Railway mounts the persistent volume at /var/lib/mysql through service settings.
+# Its builder rejects Dockerfile VOLUME directives.
 EXPOSE 3306
 ENTRYPOINT ["silverpilot-mysql-entrypoint.sh"]
 CMD ["mysqld", "--bind-address=::", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci", "--default-time-zone=+08:00"]
