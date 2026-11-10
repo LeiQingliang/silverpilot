@@ -6,8 +6,8 @@ WORKDIR /workspace
 COPY SourceCode/cecsmsServe-springboot/.mvn .mvn
 COPY SourceCode/cecsmsServe-springboot/mvnw SourceCode/cecsmsServe-springboot/mvnw.cmd SourceCode/cecsmsServe-springboot/pom.xml ./
 COPY SourceCode/cecsmsServe-springboot/src src
-RUN --mount=type=cache,target=/root/.m2/repository,sharing=locked \
-    chmod +x mvnw \
+# Use ordinary build layers so this file works without a Railway-service-specific cache ID.
+RUN chmod +x mvnw \
     && attempt=1 \
     && while [ "$attempt" -le 3 ]; do \
          if ./mvnw -B -ntp -DskipTests package; then break; fi; \
