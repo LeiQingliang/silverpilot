@@ -6,6 +6,7 @@ import com.cecsmsserve.service.AgentActionService.ActionView;
 import com.cecsmsserve.service.AgentRateLimiter;
 import com.cecsmsserve.service.AgentRunService;
 import com.cecsmsserve.service.AiProviderException;
+import com.cecsmsserve.service.AiResourceGuard;
 import com.cecsmsserve.service.AiProviderService;
 import com.cecsmsserve.service.AiProviderService.ProviderSelection;
 import com.cecsmsserve.service.AiProviderService.TokenUsage;
@@ -20,6 +21,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.slf4j.Logger;
@@ -51,6 +53,8 @@ public class ChatController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
     private static final int MAX_TOTAL_MESSAGE_CHARS = 20_000;
+    private static final int MAX_TOOLS_PER_ROUND = 4;
+    private static final int MAX_TOOLS_PER_RUN = 8;
     private static final int MAX_IMAGE_BYTES = 4 * 1024 * 1024;
     private static final int MAX_TOTAL_IMAGE_BYTES = 8 * 1024 * 1024;
     private static final Set<String> IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
@@ -129,7 +133,7 @@ public class ChatController {
             return ResponseEntity.ok(careRecommendationService.create(
                     userId, requestBody.needs(), requestBody.provider()));
         } catch (AiProviderException ex) {
-            return ResponseEntity.status(ex.getHttpStatus()).body(Map.of("error", ex.getMessage()));
+            return providerError(ex).body(Map.of("error", ex.getMessage()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
@@ -181,6 +185,7 @@ public class ChatController {
                 ? "TEXT" : "IMAGE_TEXT";
 
         try {
+            validateHistory(requestBody.messages());
             safetyService.assertNoSecrets(requestBody.messages().stream()
                     .map(ChatMessage::content).toList());
             List<ValidatedAttachment> attachments = validateAttachments(requestBody.attachments());
@@ -192,12 +197,21 @@ public class ChatController {
                     provider.displayName() + " · " + provider.model()));
 
             List<Map<String, Object>> messages = buildMessages(requestBody.messages(), attachments);
+            if (toolExecutor.isReadOnly(userId)) {
+                messages.add(1, Map.of("role", "system", "content",
+                        "服务器已将当前共享演示账号设为只读。只能查询和解释信息，不能创建待确认操作、预约、报名、取消或修改资料。"));
+            }
+            List<Map<String, Object>> availableTools = Tools.getTools().stream()
+                    .filter(tool -> !toolExecutor.isReadOnly(userId)
+                            || !toolExecutor.isMutating(String.valueOf(((Map<?, ?>) tool.get("function")).get("name"))))
+                    .toList();
+            Set<String> seenToolCallIds = new java.util.HashSet<>();
             boolean toolExecuted = false;
             boolean correctionIssued = false;
 
             for (int iteration = 0; iteration < maxToolIterations; iteration++) {
                 Map<String, Object> body = providerService.decorateBody(
-                        provider, messages, Tools.getTools(), userId);
+                        provider, messages, availableTools, userId);
                 llmCalls++;
                 Map<String, Object> apiResponse = providerService.chatCompletion(provider, body);
                 tokenUsage = tokenUsage.plus(providerService.usage(apiResponse));
@@ -210,6 +224,7 @@ public class ChatController {
 
                 List<?> modelToolCalls = asList(assistantMessage.get("tool_calls"));
                 if (!modelToolCalls.isEmpty()) {
+                    validateToolBatch(modelToolCalls, toolCalls, seenToolCallIds);
                     toolExecuted = true;
                     ToolDispatch dispatch = executeToolCalls(modelToolCalls, messages, userId, trace);
                     toolCalls += dispatch.toolCalls();
@@ -264,7 +279,7 @@ public class ChatController {
             RunSummary summary = recordRun(runId, userId, provider, modality,
                     AgentRunService.FAILED, startedNanos, llmCalls, toolCalls,
                     successfulTools, failedTools, false, "PROVIDER", promptVersion, tokenUsage, startedAt);
-            return ResponseEntity.status(ex.getHttpStatus())
+            return providerError(ex)
                     .body(ChatResponse.error(ex.getMessage(), summary, trace));
         } catch (IllegalArgumentException ex) {
             trace.add(step("FAILED", "输入或工具校验未通过", "failed", ex.getMessage()));
@@ -292,7 +307,8 @@ public class ChatController {
             return ResponseEntity.status(401).body(ActionHistoryResponse.error("请先登录"));
         }
         try {
-            return ResponseEntity.ok(ActionHistoryResponse.success(actionService.history(userId, limit)));
+            return ResponseEntity.ok(ActionHistoryResponse.success(toolExecutor.isReadOnly(userId)
+                    ? actionService.readOnlyHistory(userId, limit) : actionService.history(userId, limit)));
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body(ActionHistoryResponse.error("操作记录暂时无法读取"));
         }
@@ -334,6 +350,7 @@ public class ChatController {
 
     List<Map<String, Object>> buildMessages(
             List<ChatMessage> history, List<ValidatedAttachment> attachments) {
+        validateHistory(history);
         int totalCharacters = history.stream().mapToInt(item -> item.content().length()).sum();
         if (totalCharacters > MAX_TOTAL_MESSAGE_CHARS) {
             throw new IllegalArgumentException("消息历史总长度不能超过20000字");
@@ -372,6 +389,48 @@ public class ChatController {
             }
         }
         return messages;
+    }
+
+    static void validateHistory(List<ChatMessage> history) {
+        if (history == null || history.isEmpty() || history.size() > 30) {
+            throw new IllegalArgumentException("消息历史必须为1到30条");
+        }
+        for (ChatMessage item : history) {
+            if (item == null || !("user".equals(item.role()) || "assistant".equals(item.role()))
+                    || item.content() == null || item.content().isBlank() || item.content().length() > 4000) {
+                throw new IllegalArgumentException("消息角色或内容无效");
+            }
+        }
+        if (!"user".equals(history.getLast().role())) {
+            throw new IllegalArgumentException("最后一条消息必须是当前用户的请求");
+        }
+    }
+
+    /** Validate the whole batch before any query, audit record, or pending action. */
+    static void validateToolBatch(List<?> toolCalls, int previousCalls, Set<String> seenIds) {
+        if (toolCalls.size() > MAX_TOOLS_PER_ROUND || previousCalls + toolCalls.size() > MAX_TOOLS_PER_RUN) {
+            throw new IllegalArgumentException("AI 工具调用数量超过安全上限");
+        }
+        Set<String> batchIds = new java.util.HashSet<>();
+        for (Object value : toolCalls) {
+            if (!(value instanceof Map<?, ?> call)
+                    || !(call.get("id") instanceof String id) || !id.matches("[A-Za-z0-9_-]{1,128}")
+                    || !(call.get("function") instanceof Map<?, ?> function)
+                    || !(function.get("name") instanceof String name) || !name.matches("[a-z_]{1,64}")
+                    || !(function.get("arguments") instanceof String arguments) || arguments.length() > 4096
+                    || seenIds.contains(id) || !batchIds.add(id)) {
+                throw new IllegalArgumentException("AI 工具调用格式或参数长度无效");
+            }
+        }
+        seenIds.addAll(batchIds);
+    }
+
+    private ResponseEntity.BodyBuilder providerError(AiProviderException ex) {
+        var response = ResponseEntity.status(ex.getHttpStatus());
+        if (ex instanceof AiResourceGuard.Rejected rejected) {
+            response.header("Retry-After", Long.toString(rejected.retryAfterSeconds()));
+        }
+        return response;
     }
 
     private List<ValidatedAttachment> validateAttachments(List<ChatAttachment> attachments) {
@@ -501,7 +560,8 @@ public class ChatController {
     }
 
     private Map<String, Object> toolMessage(String toolCallId, String content) {
-        return Map.of("role", "tool", "tool_call_id", toolCallId, "content", content);
+        return Map.of("role", "tool", "tool_call_id", toolCallId, "content",
+                jsonMapper.writeValueAsString(Map.of("untrustedBusinessData", safetyService.sanitizeToolResult(content))));
     }
 
     private Integer currentUserId(HttpServletRequest request) {
@@ -514,7 +574,7 @@ public class ChatController {
     }
 
     private String localKnowledgeFallback(ChatRequest requestBody, AiProviderException exception) {
-        if (exception.getHttpStatus() < 500
+        if (exception instanceof AiResourceGuard.Rejected || exception.getHttpStatus() < 500
                 || requestBody.attachments() != null && !requestBody.attachments().isEmpty()) {
             return null;
         }
@@ -561,11 +621,11 @@ public class ChatController {
     public record ChatRequest(
             @NotEmpty(message = "消息不能为空")
             @Size(max = 30, message = "消息历史最多保留30条")
-            List<@Valid ChatMessage> messages,
+            List<@NotNull @Valid ChatMessage> messages,
             @Pattern(regexp = "auto|deepseek|doubao|longcat|mock", message = "模型提供方无效")
             String provider,
             @Size(max = 3, message = "一次最多上传3张图片")
-            List<@Valid ChatAttachment> attachments) { }
+            List<@NotNull @Valid ChatAttachment> attachments) { }
 
     public record CarePlanRequest(
             @NotBlank(message = "照护需求不能为空")

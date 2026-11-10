@@ -13,9 +13,19 @@ http {
     include /etc/nginx/mime.types;
     default_type application/octet-stream;
     server_tokens off;
+    map_hash_bucket_size 128;
     sendfile on;
-    keepalive_timeout 65;
-    client_max_body_size 105m;
+    keepalive_timeout 15s;
+    keepalive_time 1m;
+    keepalive_requests 100;
+    client_header_timeout 10s;
+    client_body_timeout 10s;
+    send_timeout 15s;
+    reset_timedout_connection on;
+    client_header_buffer_size 1k;
+    large_client_header_buffers 2 8k;
+    client_body_buffer_size 16k;
+    client_max_body_size 256k;
 
     client_body_temp_path /tmp/client_temp;
     proxy_temp_path /tmp/proxy_temp;
@@ -31,14 +41,95 @@ http {
     # spoofed X-Real-IP headers before relying on per-client rate limits.
     map $http_x_real_ip $silverpilot_client_ip {
         default $remote_addr;
-        ~^[0-9A-Fa-f:.]+$ $http_x_real_ip;
+        "~^[0-9A-Fa-f:.]{2,45}$" $http_x_real_ip;
     }
-    map $status $silverpilot_retry_after {
+    # Classify the normalized path captured before proxy rewrites. A shared
+    # group key (never a path, captcha key, query or user ID) prevents bucket
+    # rotation via casing, trailing slashes, encoded separators or new keys.
+    map $silverpilot_path $silverpilot_group {
+        default page;
+        ~^/(readyz|api/actuator/health)$ health;
+        ~*^/api/user/login(/|$) login;
+        ~*^/api/user/getVerificationCode(/|$) captcha;
+        ~*^/api/user/register(/|$) registration;
+        ~*^/api/chat(/care-plan)?/?$ ai;
+        ~*^/api/report/analyze(/|$) ai;
+        ~*^/api/(chat/admin|count|sysFunction|download)(/|$) admin;
+        ~*^/api/user/(insert|update|selectByRid|selectByRidByPage|selectByNameOrIdNum)(/|$) admin;
+        ~*^/api/[^/]+/(selectAll(ByPage)?|insert|update|delete|del|manage|all|status)(/|$) admin;
+        ~*^/api/upload(/|$) upload;
+        ~*^/api(/|$) api;
+    }
+    map $silverpilot_group $silverpilot_api_key {
+        default $silverpilot_client_ip;
+        page "";
+    }
+    map $silverpilot_api_key $silverpilot_api_global { default api; "" ""; }
+    map $silverpilot_group $silverpilot_login_key { default ""; login $silverpilot_client_ip; }
+    map $silverpilot_group $silverpilot_captcha_key { default ""; captcha $silverpilot_client_ip; }
+    map $silverpilot_group $silverpilot_registration_key { default ""; registration $silverpilot_client_ip; }
+    map $silverpilot_group $silverpilot_auth_global { default ""; login auth; registration auth; }
+    map $silverpilot_group $silverpilot_ai_key { default ""; ai $silverpilot_client_ip; }
+    map $silverpilot_group $silverpilot_ai_global { default ""; ai ai; }
+    map $silverpilot_group $silverpilot_admin_key { default ""; admin $silverpilot_client_ip; }
+    map $silverpilot_group $silverpilot_admin_global { default ""; admin admin; }
+    map $silverpilot_group $silverpilot_upload_key { default ""; upload $silverpilot_client_ip; }
+
+    # A custom public domain must be explicitly configured at startup. The
+    # platform's health-check Host may reach only the two health routes.
+    map $host $silverpilot_host_kind {
+        default invalid;
+        @@PUBLIC_HOST@@ public;
+        localhost public;
+        127.0.0.1 public;
+        "[::1]" public;
+        healthcheck.railway.app healthcheck;
+    }
+    map "$silverpilot_host_kind:$silverpilot_path" $silverpilot_bad_host {
+        default 1;
+        ~^public: 0;
+        ~^healthcheck:/(healthz|readyz)$ 0;
+    }
+    map "$request_method:$silverpilot_group" $silverpilot_bad_method {
+        default 1;
+        ~^(GET|HEAD):page$ 0;
+        ~^(GET|HEAD):health$ 0;
+        ~^(GET|HEAD|OPTIONS):captcha$ 0;
+        ~^(POST|OPTIONS):login$ 0;
+        ~^(PUT|OPTIONS):registration$ 0;
+        ~^(POST|OPTIONS):upload$ 0;
+        ~^(GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS):(api|admin|ai)$ 0;
+    }
+    map $silverpilot_group $silverpilot_allowed_methods {
+        default "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS";
+        page "GET, HEAD";
+        health "GET, HEAD";
+        captcha "GET, HEAD, OPTIONS";
+        login "POST, OPTIONS";
+        registration "PUT, OPTIONS";
+        upload "POST, OPTIONS";
+    }
+    map $upstream_http_allow $silverpilot_response_allow {
+        default $upstream_http_allow;
+        "" $silverpilot_allowed_methods;
+    }
+    map $status $silverpilot_allow_header { default ""; 405 $silverpilot_response_allow; }
+    map $silverpilot_group $silverpilot_retry_seconds {
+        default 1;
+        login 10;
+        captcha 3;
+        registration 30;
+        ai 10;
+        upload 10;
+    }
+    map "$status:$upstream_http_retry_after" $silverpilot_retry_after {
         default "";
-        429 "30";
+        ~^(429|503):[0-9]+$ $upstream_http_retry_after;
+        ~^429: $silverpilot_retry_seconds;
     }
     log_format safe '$silverpilot_client_ip [$time_local] "$request_method $uri" '
-                    '$status $body_bytes_sent $request_time';
+                    '$status $body_bytes_sent $request_time '
+                    'rate=$limit_req_status conn=$limit_conn_status';
     access_log /dev/stdout safe;
 
     resolver @@DNS_RESOLVERS@@ valid=30s;
@@ -49,9 +140,29 @@ http {
         keepalive 16;
     }
 
-    # Two immediate attempts are allowed, then the bucket refills at 2/minute.
-    limit_req_zone $silverpilot_client_ip zone=registration:10m rate=2r/m;
+    # Empty keys are not counted. All zones are shared by this Nginx instance's
+    # workers; replicas would need independent capacity or an external limiter.
+    limit_req_zone $server_name zone=site_rate:1m rate=40r/s;
+    limit_req_zone $silverpilot_client_ip zone=client_rate:2m rate=10r/s;
+    limit_req_zone $silverpilot_api_global zone=api_rate:1m rate=20r/s;
+    limit_req_zone $silverpilot_api_key zone=api_client_rate:2m rate=5r/s;
+    limit_req_zone $silverpilot_login_key zone=login_rate:1m rate=6r/m;
+    limit_req_zone $silverpilot_captcha_key zone=captcha_rate:1m rate=20r/m;
+    limit_req_zone $silverpilot_registration_key zone=registration_rate:1m rate=2r/m;
+    limit_req_zone $silverpilot_auth_global zone=auth_rate:1m rate=2r/s;
+    limit_req_zone $silverpilot_ai_key zone=ai_client_rate:1m rate=6r/m;
+    limit_req_zone $silverpilot_ai_global zone=ai_rate:1m rate=30r/m;
+    limit_req_zone $silverpilot_admin_key zone=admin_client_rate:1m rate=60r/m;
+    limit_req_zone $silverpilot_admin_global zone=admin_rate:1m rate=5r/s;
+    limit_req_zone $silverpilot_upload_key zone=upload_rate:1m rate=6r/m;
+    limit_conn_zone $server_name zone=site_connections:1m;
+    limit_conn_zone $silverpilot_client_ip zone=client_connections:2m;
+    limit_conn_zone $silverpilot_api_global zone=api_connections:1m;
+    limit_conn_zone $silverpilot_api_key zone=api_client_connections:2m;
+    limit_conn_zone $silverpilot_ai_global zone=ai_connections:1m;
+    limit_conn_zone $silverpilot_ai_key zone=ai_client_connections:1m;
     limit_req_status 429;
+    limit_conn_status 429;
 
     gzip on;
     gzip_types text/plain text/css application/json application/javascript image/svg+xml;
@@ -63,6 +174,39 @@ http {
         root /usr/share/nginx/html;
         index index.html;
 
+        # Server rewrite runs before any location rewrite. Do not replace this
+        # with lazy maps of $uri: /api stripping would bypass classification.
+        set $silverpilot_path $uri;
+        if ($silverpilot_bad_host) { return 400; }
+        if ($http_host = "") { return 400; }
+        if ($request_uri ~* "^[^?]*(%5c|%25|%3b|%3f|%23|%0[ad])") { return 400; }
+        # No matrix parameters or remaining percent escapes/backslashes in a
+        # decoded path. Query strings are untouched, including login fields.
+        if ($silverpilot_path ~ "[;%\\\\]") { return 400; }
+        if ($silverpilot_bad_method) { return 405; }
+
+        # Define every limit together; no location may override this inherited
+        # list. Nodelay rejects floods instead of holding queued connections.
+        limit_req zone=site_rate burst=80 nodelay;
+        limit_req zone=client_rate burst=40 nodelay;
+        limit_req zone=api_rate burst=30 nodelay;
+        limit_req zone=api_client_rate burst=13 nodelay;
+        limit_req zone=login_rate burst=3 nodelay;
+        limit_req zone=captcha_rate burst=5 nodelay;
+        limit_req zone=registration_rate burst=2 nodelay;
+        limit_req zone=auth_rate burst=4 nodelay;
+        limit_req zone=ai_client_rate burst=2 nodelay;
+        limit_req zone=ai_rate burst=4 nodelay;
+        limit_req zone=admin_client_rate burst=9 nodelay;
+        limit_req zone=admin_rate burst=10 nodelay;
+        limit_req zone=upload_rate burst=1 nodelay;
+        limit_conn site_connections 128;
+        limit_conn client_connections 24;
+        limit_conn api_connections 32;
+        limit_conn api_client_connections 8;
+        limit_conn ai_connections 4;
+        limit_conn ai_client_connections 2;
+
         set $silverpilot_cache_control "no-cache";
         add_header Cache-Control $silverpilot_cache_control;
         add_header X-Content-Type-Options "nosniff" always;
@@ -71,6 +215,7 @@ http {
         add_header Permissions-Policy "camera=(self), geolocation=(), microphone=(self)" always;
         add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" always;
         add_header Retry-After $silverpilot_retry_after always;
+        add_header Allow $silverpilot_allow_header always;
 
         # Replace all forwarding identities; do not append visitor-supplied
         # chains. Railway terminates HTTPS before this HTTP-only container.
@@ -82,8 +227,12 @@ http {
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header Forwarded "";
         proxy_set_header Connection "";
+        proxy_hide_header Retry-After;
+        proxy_hide_header Allow;
         proxy_connect_timeout 5s;
-        proxy_read_timeout 95s;
+        proxy_send_timeout 15s;
+        proxy_read_timeout 30s;
+        proxy_request_buffering on;
 
         # Liveness checks only Nginx. Readiness also checks backend dependencies.
         location = /healthz {
@@ -100,23 +249,28 @@ http {
 
         # Exact health above remains public; MCP and other actuator endpoints
         # stay private, including semicolon path-parameter variants.
-        location ~ "^/api/(mcp|actuator)(/|;|$)" {
+        location ~* "^/api/(mcp|actuator)(/|$)" {
             return 404;
         }
 
-        location = /api/user/register {
-            limit_req zone=registration burst=1 nodelay;
-            proxy_pass http://silverpilot_backend/user/register;
-        }
-        # Spring may normalize a trailing slash or matrix parameters. Route
-        # these variants through the same rate limit rather than a bypass.
-        location ~ "^/api/user(;[^/]*)?/register(/|;|$)" {
-            limit_req zone=registration burst=1 nodelay;
-            rewrite ^/api/(.*)$ /$1 break;
+        # Public deployment currently enables text AI only. This is lower than
+        # the optional image model limit; enable larger bodies only deliberately.
+        location ~* ^/api/(chat(/care-plan)?/?$|report/analyze(/|$)) {
+            client_max_body_size 64k;
+            proxy_read_timeout 95s;
+            rewrite (?i)^/api/(.*)$ /$1 break;
             proxy_pass http://silverpilot_backend;
         }
-        location /api/ {
-            proxy_pass http://silverpilot_backend/;
+        location ~* ^/api/upload(/|$) {
+            client_max_body_size 10m;
+            rewrite (?i)^/api/(.*)$ /$1 break;
+            proxy_pass http://silverpilot_backend;
+        }
+        # Regex precedes static assets so API suffixes such as .js cannot move
+        # into an unprotected static location. Casing still shares all buckets.
+        location ~* ^/api(/|$) {
+            rewrite (?i)^/api/?(.*)$ /$1 break;
+            proxy_pass http://silverpilot_backend;
         }
         location ~ ^/(image|file|video)/ {
             set $silverpilot_cache_control "public, max-age=31536000, immutable";

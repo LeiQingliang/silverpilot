@@ -8,9 +8,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class JWTInterceptorConfig implements WebMvcConfigurer {
 
     private final JWTInterceptor jwtInterceptor;
+    private final AiAdmissionInterceptor aiAdmissionInterceptor;
 
-    public JWTInterceptorConfig(JWTInterceptor jwtInterceptor) {
+    public JWTInterceptorConfig(JWTInterceptor jwtInterceptor, AiAdmissionInterceptor aiAdmissionInterceptor) {
         this.jwtInterceptor = jwtInterceptor;
+        this.aiAdmissionInterceptor = aiAdmissionInterceptor;
     }
 
     @Override
@@ -34,5 +36,6 @@ public class JWTInterceptorConfig implements WebMvcConfigurer {
                         "/mcp",
                         "/mcp/**"
                 );
+        registry.addInterceptor(aiAdmissionInterceptor).addPathPatterns("/**");
     }
 }

@@ -102,6 +102,15 @@ SQL
 echo 'Building the four Railway deployment images.'
 dc config --quiet
 dc build > "$smoke_tmp/build.log" 2>&1
+# Run all bounded burst/concurrency checks against a stub using the exact
+# Nginx binary from the new image. No database, model, credentials or public
+# address is involved. Each test owns and removes its temporary container.
+edge_image=$(docker image inspect "$(dc images --quiet frontend)" --format '{{.Id}}' 2>/dev/null || true)
+if [ -z "$edge_image" ]; then
+    # Compose does not list images until containers exist on some versions.
+    edge_image=$(docker image inspect "${smoke_project}-frontend" --format '{{.Id}}')
+fi
+python3 deploy/railway/edge-smoke.py --docker-image "$edge_image"
 echo 'Starting the isolated stack and checking dependency health.'
 dc up --detach --no-build --wait --wait-timeout 300 >> "$smoke_tmp/operations.log" 2>&1
 expect_seed_accounts
@@ -125,6 +134,10 @@ image_path=$(find image -type f -name '*.png' -print -quit)
 [ -n "$image_path" ]
 curl --fail --silent --show-error "$base_url/$image_path" -o "$smoke_tmp/image.png"
 cmp --silent "$image_path" "$smoke_tmp/image.png"
+
+# Only checks rejections and anonymous health at a literal loopback address.
+# Burst/concurrency tests use a standalone stub, never this backend or an LLM.
+python3 deploy/railway/edge-smoke.py --base-url "$base_url"
 
 # Verify the deployed JAR's actual passwordMatches implementation against both
 # bootstrap hashes. A standalone JVM test does not issue or bypass a captcha.
@@ -200,6 +213,9 @@ echo 'Bootstrap passwords are compatible with the deployed backend; default pass
 
 # Exercise the real public registration boundary without authenticating as an
 # administrator. Request/response payloads remain in the temporary directory.
+# Exactly two PUTs fit the production edge's registration burst: first missing
+# CAPTCHA, then valid CAPTCHA. Replay is checked via consumed Redis state below,
+# not a third HTTP request which could be rejected by the edge instead.
 export SMOKE_REGISTRATION_NAME="ci_$(openssl rand -hex 8)"
 python3 - "$smoke_tmp/registration.json" <<'PY'
 import json
@@ -212,9 +228,45 @@ Path(sys.argv[1]).write_text(json.dumps({
     # Synthetic format-only fixtures; 990000 is a fictitious identity region.
     'telephone': ''.join(('139', '0000', '0000')),
     'idNum': ''.join(('990000', '19900101', '001', '0')),
-    'department': 'admin', 'point': 1000000, 'token': 'client-supplied-token'
+    'role': 1, 'department': 'admin', 'point': 1000000, 'token': 'client-supplied-token'
 }))
 PY
+registration_http=$(curl --silent --show-error -X PUT "$base_url/api/user/register" \
+    -H 'Content-Type: application/json' -H "Origin: $base_url" \
+    --data-binary "@$smoke_tmp/registration.json" -o "$smoke_tmp/registration-missing-captcha.json" \
+    --write-out '%{http_code}')
+python3 - "$smoke_tmp/registration-missing-captcha.json" "$registration_http" <<'PY'
+import json
+from pathlib import Path
+import sys
+assert sys.argv[2] in ('200', '400'), 'Registration rejection did not reach the expected application boundary'
+result = json.loads(Path(sys.argv[1]).read_text())
+assert result['code'] == 400 and result.get('result') is None, 'Missing CAPTCHA accepted an account'
+PY
+[ "$(printf 'SELECT COUNT(*) FROM `user`;\n' | sql)" = "$initial_user_count" ]
+
+# Seed a one-time fixture only through this freshly created Compose Redis.
+# No production API, application setting, or CAPTCHA-bypass endpoint exists.
+python3 - "$smoke_tmp" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+import uuid
+root = Path(sys.argv[1])
+challenge = 'ci-register-' + uuid.uuid4().hex
+storage_key = 'cecsms:security:captcha:' + hashlib.sha256(challenge.encode()).hexdigest()[:32]
+(root / 'registration-captcha-key.txt').write_text(storage_key)
+path = root / 'registration.json'
+payload = json.loads(path.read_text())
+payload.update(captchaId=challenge, verificationCode='AB7Z')
+path.write_text(json.dumps(payload))
+PY
+registration_captcha_key=$(cat "$smoke_tmp/registration-captcha-key.txt")
+dc exec -T redis sh -c \
+    'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --raw SET "$1" "$2" EX 300' \
+    sh "$registration_captcha_key" AB7Z > "$smoke_tmp/registration-captcha-set.txt"
+grep -qx OK "$smoke_tmp/registration-captcha-set.txt"
 curl --fail --silent --show-error -X PUT "$base_url/api/user/register" \
     -H 'Content-Type: application/json' -H "Origin: $base_url" \
     --data-binary "@$smoke_tmp/registration.json" -o "$smoke_tmp/registration-result.json"
@@ -231,6 +283,11 @@ assert user.get('token') is None and 'password' not in user, 'Registration expos
 PY
 registration_count=$(printf "SELECT COUNT(*) FROM \`user\` WHERE username='%s' AND roleId=4 AND point=0 AND department IS NULL AND id>18;\n" "$SMOKE_REGISTRATION_NAME" | sql)
 [ "$registration_count" = 1 ]
+dc exec -T redis sh -c \
+    'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --raw EXISTS "$1"' \
+    sh "$registration_captcha_key" > "$smoke_tmp/registration-captcha-exists.txt"
+grep -qx 0 "$smoke_tmp/registration-captcha-exists.txt"
+expect_seed_accounts
 
 # Check the Java process and mount using the application's real UID.
 dc exec -T backend sh -c 'grep -Eq "^Uid:[[:space:]]+10001[[:space:]]" /proc/1/status' >> "$smoke_tmp/operations.log" 2>&1

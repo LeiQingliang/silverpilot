@@ -13,7 +13,7 @@ public class AiSafetyService {
     private static final Pattern PRIVATE_KEY = Pattern.compile(
             "(?i)-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----");
     private static final Pattern ASSIGNMENT_SECRET = Pattern.compile(
-            "(?i)(?:api[_ -]?key|access[_ -]?token|client[_ -]?secret|password)\\s*[:=]\\s*[^\\s]{12,}");
+            "(?i)(?:api[_ -]?key|access[_ -]?token|client[_ -]?secret|password)[\\\"']?\\s*[:=]\\s*[\\\"']?[^\\s\\\"',}]{12,}");
     private static final Pattern ID_NUMBER = Pattern.compile(
             "(?<!\\d)([1-9]\\d{5})(?:18|19|20)\\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\\d|3[01])\\d{3}[0-9Xx](?!\\d)");
     private static final Pattern PHONE = Pattern.compile("(?<!\\d)(1[3-9])\\d{7}(\\d{2})(?!\\d)");
@@ -37,5 +37,16 @@ public class AiSafetyService {
         String redacted = ID_NUMBER.matcher(value).replaceAll("$1************");
         redacted = PHONE.matcher(redacted).replaceAll("$1*******$2");
         return EMAIL.matcher(redacted).replaceAll("$1***@$2");
+    }
+
+    /** Data filtering supplements server authorization; it is not an injection-proof boundary. */
+    public String sanitizeToolResult(String value) {
+        if (value == null) return "";
+        if (PRIVATE_KEY.matcher(value).find()) return "[工具结果包含私钥内容，已隐藏]";
+        String bounded = MODEL_KEY.matcher(value).replaceAll("[凭据已隐藏]");
+        bounded = ASSIGNMENT_SECRET.matcher(bounded).replaceAll("[凭据已隐藏]");
+        bounded = redactForModel(bounded);
+        return bounded.substring(0, Math.min(bounded.length(), 6000))
+                + (bounded.length() > 6000 ? "\n[结果已截断]" : "");
     }
 }

@@ -38,7 +38,7 @@ test('production policy allows same-origin camera and microphone only', () => {
 })
 
 test('versioned prompt handles fuzzy requests and avoids canned AI phrasing', () => {
-  assert.match(prompt, /version: 3\.0\.0/)
+  assert.match(prompt, /version: 3\.1\.0/)
   assert.match(prompt, /模糊指令处理/)
   assert.match(prompt, /只读查询缺少筛选条件时/)
   assert.match(prompt, /不写“作为 AI”/)

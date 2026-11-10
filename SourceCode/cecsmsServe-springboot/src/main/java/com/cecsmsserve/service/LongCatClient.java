@@ -34,6 +34,12 @@ public class LongCatClient {
     private final String model;
     private final int maxAttempts;
     private final Duration retryBackoff;
+    private AiResourceGuard resourceGuard;
+
+    @Autowired
+    void setResourceGuard(AiResourceGuard resourceGuard) {
+        this.resourceGuard = java.util.Objects.requireNonNull(resourceGuard);
+    }
 
     @Autowired
     public LongCatClient(
@@ -71,11 +77,15 @@ public class LongCatClient {
         Map<String, Object> request = responsesRequest(body);
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
+                AiResourceGuard.Reservation reservation = resourceGuard == null ? null
+                        : resourceGuard.reserveModelCall("longcat", model, request);
                 Map<String, Object> response = restClient.post().uri(endpoint)
                         .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                         .body(request).retrieve().body(RESPONSE_TYPE);
-                return normalizeResponse(response);
+                Map<String, Object> normalized = normalizeResponse(response);
+                if (reservation != null) reservation.recordUsage(normalized);
+                return normalized;
             } catch (RestClientResponseException ex) {
                 int status = ex.getStatusCode().value();
                 if (status == 401 || status == 403) {

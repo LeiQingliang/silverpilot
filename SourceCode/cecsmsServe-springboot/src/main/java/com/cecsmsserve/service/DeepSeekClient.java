@@ -27,6 +27,14 @@ public class DeepSeekClient {
     private final String apiKey;
     private final int maxAttempts;
     private final Duration retryBackoff;
+    private AiResourceGuard resourceGuard;
+
+    // Spring requires this dependency; manually constructed loopback unit-test
+    // clients retain their existing constructors without a running quota store.
+    @Autowired
+    void setResourceGuard(AiResourceGuard resourceGuard) {
+        this.resourceGuard = java.util.Objects.requireNonNull(resourceGuard);
+    }
 
     @Autowired
     public DeepSeekClient(
@@ -69,6 +77,8 @@ public class DeepSeekClient {
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
+                AiResourceGuard.Reservation reservation = resourceGuard == null ? null
+                        : resourceGuard.reserveModelCall("deepseek", String.valueOf(body.get("model")), body);
                 Map<String, Object> response = restClient.post()
                         .uri(apiUrl)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -80,6 +90,7 @@ public class DeepSeekClient {
                 if (response == null) {
                     throw new DeepSeekException("AI 服务返回了空响应", 502);
                 }
+                if (reservation != null) reservation.recordUsage(response);
                 return response;
             } catch (RestClientResponseException ex) {
                 int status = ex.getStatusCode().value();

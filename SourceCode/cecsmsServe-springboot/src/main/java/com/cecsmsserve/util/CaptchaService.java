@@ -37,6 +37,7 @@ public class CaptchaService {
     private final Map<String, CaptchaEntry> localEntries = new ConcurrentHashMap<>();
     private final StringRedisTemplate redisTemplate;
     private final boolean redisEnabled;
+    private final boolean registrationRedisFailClosed;
     private final Duration ttl;
     private final int maxLocalEntries;
     private final Clock clock;
@@ -46,10 +47,11 @@ public class CaptchaService {
     public CaptchaService(
             @Value("${app.security.captcha.ttl:5m}") Duration ttl,
             @Value("${app.security.captcha.max-local-entries:10000}") int maxLocalEntries,
+            @Value("${app.security.registration.redis-fail-closed:false}") boolean registrationRedisFailClosed,
             @Value("${agent.redis.enabled:false}") boolean redisEnabled,
             ObjectProvider<StringRedisTemplate> redisProvider) {
         this(ttl, maxLocalEntries, Clock.systemUTC(),
-                redisEnabled ? redisProvider.getIfAvailable() : null, redisEnabled);
+                redisEnabled ? redisProvider.getIfAvailable() : null, redisEnabled, registrationRedisFailClosed);
     }
 
     CaptchaService(
@@ -58,11 +60,18 @@ public class CaptchaService {
             Clock clock,
             StringRedisTemplate redisTemplate,
             boolean redisEnabled) {
+        this(ttl, maxLocalEntries, clock, redisTemplate, redisEnabled, false);
+    }
+
+    CaptchaService(
+            Duration ttl, int maxLocalEntries, Clock clock,
+            StringRedisTemplate redisTemplate, boolean redisEnabled, boolean registrationRedisFailClosed) {
         this.ttl = ttl == null || ttl.isZero() || ttl.isNegative() ? Duration.ofMinutes(5) : ttl;
         this.maxLocalEntries = Math.max(1, maxLocalEntries);
         this.clock = clock;
         this.redisTemplate = redisTemplate;
         this.redisEnabled = redisEnabled && redisTemplate != null;
+        this.registrationRedisFailClosed = registrationRedisFailClosed;
     }
 
     public boolean isValidKey(String key) {
@@ -88,9 +97,18 @@ public class CaptchaService {
     }
 
     public boolean consumeMatches(String key, String submittedCode) {
+        return consume(key, submittedCode, false) == Verification.MATCH;
+    }
+
+    public Verification consumeForRegistration(String key, String submittedCode) {
+        return consume(key, submittedCode, registrationRedisFailClosed);
+    }
+
+    private Verification consume(String key, String submittedCode, boolean requireRedis) {
         if (!isValidKey(key)) {
-            return false;
+            return Verification.MISMATCH;
         }
+        if (requireRedis && !redisEnabled) return Verification.UNAVAILABLE;
 
         CaptchaEntry localEntry = localEntries.remove(key);
         String expected = null;
@@ -100,20 +118,22 @@ public class CaptchaService {
                 redisFailureLogged.set(false);
             } catch (RuntimeException ex) {
                 logRedisFallbackOnce(ex);
+                if (requireRedis) return Verification.UNAVAILABLE;
             }
         }
-        if (expected == null && localEntry != null && localEntry.expiresAt().isAfter(clock.instant())) {
+        if (!requireRedis && expected == null && localEntry != null && localEntry.expiresAt().isAfter(clock.instant())) {
             expected = localEntry.value();
         }
         if (expected == null) {
-            return false;
+            return Verification.MISMATCH;
         }
         if (submittedCode == null || submittedCode.isBlank()) {
-            return false;
+            return Verification.MISMATCH;
         }
         return MessageDigest.isEqual(
                 expected.getBytes(StandardCharsets.UTF_8),
-                normalizeCode(submittedCode).getBytes(StandardCharsets.UTF_8));
+                normalizeCode(submittedCode).getBytes(StandardCharsets.UTF_8))
+                ? Verification.MATCH : Verification.MISMATCH;
     }
 
     private boolean storeLocally(String key, String code) {
@@ -150,4 +170,5 @@ public class CaptchaService {
     }
 
     private record CaptchaEntry(String value, Instant expiresAt) { }
+    public enum Verification { MATCH, MISMATCH, UNAVAILABLE }
 }

@@ -31,6 +31,12 @@ public class DoubaoClient {
     private final String model;
     private final int maxAttempts;
     private final Duration retryBackoff;
+    private AiResourceGuard resourceGuard;
+
+    @Autowired
+    void setResourceGuard(AiResourceGuard resourceGuard) {
+        this.resourceGuard = java.util.Objects.requireNonNull(resourceGuard);
+    }
 
     @Autowired
     public DoubaoClient(
@@ -76,6 +82,8 @@ public class DoubaoClient {
         }
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
+                AiResourceGuard.Reservation reservation = resourceGuard == null ? null
+                        : resourceGuard.reserveModelCall("doubao", model, body);
                 Map<String, Object> response = restClient.post()
                         .uri(apiUrl)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -87,6 +95,7 @@ public class DoubaoClient {
                 if (response == null) {
                     throw new AiProviderException("豆包模型返回了空响应", 502);
                 }
+                if (reservation != null) reservation.recordUsage(response);
                 return response;
             } catch (RestClientResponseException ex) {
                 int status = ex.getStatusCode().value();

@@ -8,8 +8,8 @@ if [ "${PORT:-8080}" != "8080" ]; then
     exit 1
 fi
 
-backend_host=${SILVERPILOT_BACKEND_HOST:-backend.railway.internal}
-if [ "${#backend_host}" -gt 253 ] || ! printf '%s\n' "$backend_host" | awk '
+validate_host() {
+    [ "${#1}" -le 253 ] && printf '%s\n' "$1" | awk '
     BEGIN { valid = 1 }
     {
         count = split($0, labels, ".")
@@ -20,8 +20,12 @@ if [ "${#backend_host}" -gt 253 ] || ! printf '%s\n' "$backend_host" | awk '
         if (NR != 1) valid = 0
     }
     END { exit !valid }
-'; then
-    printf '%s\n' 'SILVERPILOT_BACKEND_HOST must be a DNS hostname without a scheme, port or path.' >&2
+'
+}
+backend_host=${SILVERPILOT_BACKEND_HOST:-backend.railway.internal}
+public_host=${SILVERPILOT_PUBLIC_HOST:-${RAILWAY_PUBLIC_DOMAIN:-silverpilot.up.railway.app}}
+if ! validate_host "$backend_host" || ! validate_host "$public_host"; then
+    printf '%s\n' 'Backend and public hosts must be DNS hostnames without a scheme, port or path.' >&2
     exit 1
 fi
 
@@ -51,6 +55,7 @@ fi
 # Values have restricted alphabets, so they cannot introduce Nginx directives
 # or sed replacements. Substitute only these markers, preserving Nginx $vars.
 sed -e "s|@@BACKEND_HOST@@|$backend_host|g" \
+    -e "s|@@PUBLIC_HOST@@|$public_host|g" \
     -e "s|@@DNS_RESOLVERS@@|$resolvers|g" \
     /etc/nginx/nginx.conf.template > /tmp/silverpilot-nginx.conf
 
