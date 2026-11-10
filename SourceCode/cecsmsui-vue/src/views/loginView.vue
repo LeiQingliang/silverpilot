@@ -28,6 +28,7 @@
               <p class="subtitle">智慧养老服务系统</p>
             </div>
           </template>
+          <p class="demo-credentials">只读演示账号：<strong>admin</strong> / <strong>linge</strong>，密码 <strong>123456</strong>。支持查看和 AI 问答，请勿填写真实个人资料。</p>
           <el-form
             :model="ruleForm"
             ref="ruleFormRef"
@@ -210,6 +211,7 @@ const register = () => {
 </script>
 
 <style lang="scss" scoped>
+.demo-credentials { margin: 0 0 18px; padding: 12px 14px; border-radius: var(--sp-radius-sm); background: var(--sp-brand-soft); color: var(--sp-text-secondary); font-size: 13px; line-height: 1.6; }
 :global(body) {
   margin: 0 !important;
   padding-top: 0 !important;

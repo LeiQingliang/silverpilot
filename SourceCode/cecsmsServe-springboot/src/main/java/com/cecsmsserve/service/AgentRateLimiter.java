@@ -4,12 +4,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -17,14 +18,22 @@ import java.util.concurrent.atomic.AtomicLong;
 public class AgentRateLimiter {
 
     private static final long WINDOW_MILLIS = 60_000L;
+    private static final int MAX_LOCAL_USERS = 4096;
+    private static final DefaultRedisScript<Long> ACQUIRE = new DefaultRedisScript<>("""
+            local count = tonumber(redis.call('GET', KEYS[1]) or '0')
+            if not count or count < 0 then return -1 end
+            if count >= tonumber(ARGV[1]) then return 0 end
+            redis.call('INCR', KEYS[1])
+            if redis.call('PTTL', KEYS[1]) < 0 then redis.call('PEXPIRE', KEYS[1], ARGV[2]) end
+            return 1
+            """, Long.class);
 
-    private final Map<Integer, Window> windows = new ConcurrentHashMap<>();
+    private final Map<Integer, Window> windows = new HashMap<>();
     private final int requestsPerMinute;
     private final Clock clock;
     private final StringRedisTemplate redisTemplate;
     private final boolean redisEnabled;
     private final AtomicBoolean redisAvailable = new AtomicBoolean(false);
-    private final AtomicLong requestCounter = new AtomicLong();
     private final AtomicLong redisFailureCounter = new AtomicLong();
 
     @Autowired
@@ -48,7 +57,7 @@ public class AgentRateLimiter {
         this.requestsPerMinute = Math.max(1, requestsPerMinute);
         this.clock = clock;
         this.redisTemplate = redisTemplate;
-        this.redisEnabled = redisEnabled && redisTemplate != null;
+        this.redisEnabled = redisEnabled;
     }
 
     public Decision acquire(Integer userId) {
@@ -62,8 +71,8 @@ public class AgentRateLimiter {
                 return decision;
             } catch (RuntimeException ex) {
                 redisAvailable.set(false);
-                // Avoid a log storm here: callers still receive safe local rate limiting.
                 redisFailureCounter.incrementAndGet();
+                return new Decision(false, 30);
             }
         }
         return acquireLocal(userId);
@@ -73,7 +82,7 @@ public class AgentRateLimiter {
         if (!redisEnabled) {
             return new BackendStatus("local", true, redisFailureCounter.get());
         }
-        return new BackendStatus(redisAvailable.get() ? "redis" : "local-fallback",
+        return new BackendStatus(redisAvailable.get() ? "redis" : "redis-unavailable",
                 redisAvailable.get(), redisFailureCounter.get());
     }
 
@@ -81,28 +90,26 @@ public class AgentRateLimiter {
         long now = clock.millis();
         long minuteBucket = now / WINDOW_MILLIS;
         String key = "cecsms:agent:rate:" + userId + ":" + minuteBucket;
-        Long count = redisTemplate.opsForValue().increment(key);
-        redisTemplate.expire(key, Duration.ofMinutes(2));
-        if (count == null) {
+        if (redisTemplate == null) throw new IllegalStateException("Redis is required but unavailable");
+        Long result = redisTemplate.execute(ACQUIRE, List.of(key), Integer.toString(requestsPerMinute), "120000");
+        if (result == null || result < 0) {
             throw new IllegalStateException("Redis did not return a rate-limit counter");
         }
         long remainingMillis = WINDOW_MILLIS - (now % WINDOW_MILLIS);
-        return new Decision(count <= requestsPerMinute,
+        return new Decision(result == 1,
                 Math.max(1, (remainingMillis + 999) / 1000));
     }
 
-    private Decision acquireLocal(Integer userId) {
+    private synchronized Decision acquireLocal(Integer userId) {
         long now = clock.millis();
+        windows.entrySet().removeIf(entry -> now - entry.getValue().startedAt() >= WINDOW_MILLIS);
+        if (!windows.containsKey(userId) && windows.size() >= MAX_LOCAL_USERS) return new Decision(false, 60);
         Window window = windows.compute(userId, (ignored, current) -> {
             if (current == null || now - current.startedAt() >= WINDOW_MILLIS) {
                 return new Window(now, 1);
             }
-            return new Window(current.startedAt(), current.count() + 1);
+            return new Window(current.startedAt(), Math.min(requestsPerMinute + 1, current.count() + 1));
         });
-
-        if ((requestCounter.incrementAndGet() & 255) == 0) {
-            windows.entrySet().removeIf(entry -> now - entry.getValue().startedAt() >= WINDOW_MILLIS * 2);
-        }
 
         boolean allowed = window.count() <= requestsPerMinute;
         long remainingMillis = Math.max(0, WINDOW_MILLIS - (now - window.startedAt()));

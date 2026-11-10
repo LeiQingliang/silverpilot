@@ -7,11 +7,11 @@
           <div class="trust-mark"><span>银</span><strong>智慧养老成员服务</strong></div>
           <div>
             <p class="sp-eyebrow">成员信息登记</p>
-            <h1 id="register-trust-title">创建可信的<br />养老服务档案</h1>
-            <p>账号用于连接活动报名、服务预约、健康档案与生活助理。涉及报名、预约或取消时仍需再次确认。</p>
+            <h1 id="register-trust-title">创建账号<br />体验养老服务</h1>
+            <p>本项目为公开演示，使用虚构测试资料体验活动、预约与生活助理。请勿提交真实身份、联系方式或健康信息。</p>
           </div>
           <ul>
-            <li><span>01</span>身份信息仅用于本地演示业务</li>
+            <li><span>01</span>公开演示仅填写虚构测试资料</li>
             <li><span>02</span>密码由后端安全哈希存储</li>
             <li><span>03</span>智能建议不替代医疗诊断</li>
           </ul>
@@ -22,7 +22,7 @@
             <div class="card-header">
               <span class="sp-eyebrow">创建账号</span>
               <h2>创建成员账号</h2>
-              <p>请填写真实且可核验的信息</p>
+              <p>仅填写虚构测试资料，请勿使用真实个人信息</p>
             </div>
           </template>
 
@@ -39,17 +39,17 @@
             <el-row :gutter="16">
               <el-col :xs="24" :sm="12">
                 <el-form-item label="用户名" prop="username">
-                  <el-input v-model="form.username" placeholder="5-10位字母或数字" autocomplete="username" clearable />
+                  <el-input v-model="form.username" placeholder="5-32位字母、数字或下划线" autocomplete="username" maxlength="32" clearable />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
-                <el-form-item label="真实姓名" prop="name">
-                  <el-input v-model="form.name" placeholder="请输入真实姓名" autocomplete="name" clearable />
+                <el-form-item label="演示姓名" prop="name">
+                  <el-input v-model="form.name" placeholder="请输入虚构的演示姓名" autocomplete="off" maxlength="50" clearable />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
                 <el-form-item label="密码" prop="password">
-                  <el-input v-model="form.password" type="password" placeholder="8-18位，字母开头" autocomplete="new-password" show-password clearable />
+                  <el-input v-model="form.password" type="password" placeholder="8-72位独立密码" autocomplete="new-password" maxlength="72" show-password clearable />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
@@ -58,20 +58,30 @@
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
-                <el-form-item label="身份证号码" prop="idNum">
-                  <el-input v-model="form.idNum" placeholder="18位身份证号" autocomplete="off" clearable />
+                <el-form-item label="测试证件号码" prop="idNum">
+                  <el-input v-model="form.idNum" placeholder="虚构18位测试号码，勿填真实证件" autocomplete="off" maxlength="18" clearable />
                 </el-form-item>
               </el-col>
               <el-col :xs="24" :sm="12">
-                <el-form-item label="手机号码" prop="telephone">
-                  <el-input v-model="form.telephone" placeholder="11位手机号" autocomplete="tel" inputmode="tel" clearable />
+                <el-form-item label="测试手机号码" prop="telephone">
+                  <el-input v-model="form.telephone" placeholder="虚构11位测试号码" autocomplete="off" inputmode="tel" maxlength="11" clearable />
                 </el-form-item>
               </el-col>
             </el-row>
 
-            <p id="privacy-note" class="privacy-note">本页面用于本地演示。生产环境应接入隐私授权、实名核验与数据保留策略。</p>
+            <el-form-item label="图形验证码" prop="verificationCode">
+              <div class="registration-captcha">
+                <el-input v-model.trim="form.verificationCode" placeholder="输入图中4位字符" autocomplete="off" maxlength="4" clearable />
+                <button class="captcha-button" type="button" :disabled="submitting" aria-label="刷新注册验证码" @click="refreshCaptcha">
+                  <img v-if="!captchaError" :key="captchaId" :src="captchaUrl" alt="注册验证码" width="120" height="40" @load="onCaptchaLoad" @error="onCaptchaError" />
+                  <span v-if="captchaError" role="status">加载失败，点击重试</span>
+                  <span v-else>{{ captchaLoading ? '加载中…' : '看不清？点击刷新' }}</span>
+                </button>
+              </div>
+            </el-form-item>
+            <p id="privacy-note" class="privacy-note">这是公开演示网站，资料会用于共享演示。请勿填写真实姓名、手机号、身份证号、地址或健康信息；请勿复用其他网站的密码。</p>
             <div class="action-buttons">
-              <el-button native-type="submit" type="primary" :loading="submitting">创建账号</el-button>
+              <el-button native-type="submit" type="primary" :loading="submitting" :disabled="captchaLoading || captchaError">创建账号</el-button>
               <el-button :disabled="submitting" @click="resetForm(ruleFormRef)">重置</el-button>
             </div>
             <button class="login-link" type="button" @click="toLogin">已有账号？返回登录</button>
@@ -87,13 +97,31 @@ import { onBeforeUnmount, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import FrontHeaderMenu from '@/components/front/home/FrontHeaderMenu.vue'
-import api from '../utils/axios'
+import api, { apiUrl } from '../utils/axios'
+import { createRegistrationPayload } from '../utils/registration'
 
 const router = useRouter()
 const ruleFormRef = ref()
-const form = ref({})
+const form = ref({ username: '', name: '', password: '', checkPass: '', idNum: '', telephone: '', verificationCode: '' })
 const submitting = ref(false)
 let redirectTimer
+const createCaptchaId = () => globalThis.crypto?.randomUUID?.()
+  || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+const captchaId = ref(createCaptchaId())
+const captchaUrl = ref(apiUrl('/user/getVerificationCode/' + captchaId.value))
+const captchaLoading = ref(true)
+const captchaError = ref(false)
+
+const refreshCaptcha = () => {
+  captchaId.value = createCaptchaId()
+  captchaUrl.value = apiUrl('/user/getVerificationCode/' + captchaId.value)
+  form.value.verificationCode = ''
+  captchaLoading.value = true
+  captchaError.value = false
+  ruleFormRef.value?.clearValidate('verificationCode')
+}
+const onCaptchaLoad = () => { captchaLoading.value = false; captchaError.value = false }
+const onCaptchaError = () => { captchaLoading.value = false; captchaError.value = true }
 
 const validatePass2 = (_rule, value, callback) => {
   if (!value) callback(new Error('请再次输入密码'))
@@ -104,32 +132,42 @@ const validatePass2 = (_rule, value, callback) => {
 const rules = reactive({
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9]{5,10}$/, message: '5-10位字母或数字', trigger: 'blur' }
+    { pattern: /^[a-zA-Z0-9_]{5,32}$/, message: '5-32位字母、数字或下划线', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9_]{7,17}$/, message: '8-18位，字母开头，可含数字、下划线', trigger: 'blur' }
+    { min: 8, max: 72, message: '密码需8-72位，请使用独立密码', trigger: 'blur' }
   ],
   checkPass: [{ validator: validatePass2, required: true, trigger: 'change' }],
   idNum: [
-    { required: true, message: '请输入身份证号', trigger: 'blur' },
-    { pattern: /^\d{17}[0-9Xx]$/, message: '请输入正确的18位身份证号', trigger: 'change' }
+    { required: true, message: '请输入虚构测试证件号码', trigger: 'blur' },
+    { pattern: /^\d{17}[0-9Xx]$/, message: '测试号码需18位，末位可为X', trigger: 'change' }
   ],
-  name: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入虚构演示姓名', trigger: 'blur' }],
   telephone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的11位手机号', trigger: 'change' }
+    { required: true, message: '请输入虚构测试手机号码', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '测试号码需符合11位手机号格式', trigger: 'change' }
+  ],
+  verificationCode: [
+    { required: true, message: '请输入图形验证码', trigger: 'blur' },
+    { pattern: /^[A-Za-z0-9]{4}$/, message: '请输入图中的4位字符', trigger: 'blur' }
   ]
 })
 
 const onSubmit = async (formEl) => {
   if (!formEl || submitting.value) return
   const valid = await formEl.validate().catch(() => false)
-  if (!valid) return
+  if (!valid) { refreshCaptcha(); return }
+  if (captchaLoading.value || captchaError.value) {
+    ElMessage.error('请先加载验证码后再提交')
+    refreshCaptcha()
+    return
+  }
   submitting.value = true
   try {
-    const { data } = await api.put('/user/register', form.value, { suppressErrorToast: true })
-    const messages = { 101: '注册失败，请重试', 104: '用户名已被注册', 105: '手机号已被注册', 106: '头像上传失败' }
+    const payload = createRegistrationPayload(form.value, captchaId.value)
+    const { data } = await api.put('/user/register', payload, { suppressErrorToast: true })
+    const messages = { 101: '注册失败，请重试', 104: '用户名已被注册', 105: '测试号码已被使用，请更换', 108: '验证码错误或已过期，请重新输入', 429: '注册尝试过于频繁，请稍后重试' }
     if (data.code !== 200) {
       ElMessage.error(messages[data.code] || data.msg || '注册失败')
       return
@@ -140,10 +178,11 @@ const onSubmit = async (formEl) => {
     ElMessage.error(error.response?.data?.msg || '注册请求失败，请检查网络后重试')
   } finally {
     submitting.value = false
+    refreshCaptcha()
   }
 }
 
-const resetForm = (formEl) => formEl?.resetFields()
+const resetForm = (formEl) => { formEl?.resetFields(); refreshCaptcha() }
 const toLogin = () => router.push('/login')
 onBeforeUnmount(() => window.clearTimeout(redirectTimer))
 </script>
@@ -160,6 +199,11 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
 .register-card :deep(.el-card__header) { padding: 34px 38px 10px; border: 0; }.register-card :deep(.el-card__body) { padding: 10px 38px 34px; }
 .card-header { display: grid; gap: 6px; }.card-header h2 { margin: 0; color: var(--sp-text); font-size: 28px; letter-spacing: -.025em; }.card-header p { margin: 0; color: var(--sp-text-muted); font-size: 13px; }
 .register-form :deep(.el-form-item) { margin-bottom: 18px; }.register-form :deep(.el-form-item__label) { margin-bottom: 7px; line-height: 1.2; }
+.registration-captcha { display: flex; align-items: center; gap: 12px; width: 100%; }
+.registration-captcha .el-input { flex: 1; min-width: 0; }
+.captcha-button { display: grid; justify-items: center; gap: 3px; flex: 0 0 136px; min-height: 66px; padding: 5px; border: 1px solid var(--sp-border); border-radius: var(--sp-radius-sm); background: var(--sp-surface-muted); color: var(--sp-text-secondary); font-size: 11px; cursor: pointer; }
+.captcha-button img { display: block; max-width: 100%; object-fit: contain; }
+.captcha-button:disabled { cursor: wait; }
 .privacy-note { margin: 2px 0 18px; padding: 10px 12px; color: var(--sp-text-muted); font-size: 11px; line-height: 1.55; background: var(--sp-surface-muted); border-left: 3px solid var(--sp-brand); border-radius: 0 var(--sp-radius-xs) var(--sp-radius-xs) 0; }
 .action-buttons { display: grid; grid-template-columns: 1fr auto; gap: 10px; }.action-buttons .el-button { min-height: 46px; margin: 0; }
 .login-link { width: 100%; min-height: 44px; margin-top: 10px; color: var(--sp-brand-strong); font-size: 13px; font-weight: 650; background: transparent; border: 0; border-radius: var(--sp-radius-sm); cursor: pointer; }.login-link:hover { background: var(--sp-brand-soft); }

@@ -26,10 +26,12 @@ public class JWTInterceptor implements HandlerInterceptor {
 
     private final IUserService userService;
     private final JWTUtil jwtUtil;
+    private final DemoAccessPolicy demoAccessPolicy;
 
-    public JWTInterceptor(IUserService userService, JWTUtil jwtUtil) {
+    public JWTInterceptor(IUserService userService, JWTUtil jwtUtil, DemoAccessPolicy demoAccessPolicy) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
+        this.demoAccessPolicy = demoAccessPolicy;
     }
 
     @Override
@@ -53,6 +55,14 @@ public class JWTInterceptor implements HandlerInterceptor {
             }
             request.setAttribute(USER_ID_ATTRIBUTE, userId);
             request.setAttribute(USER_ROLE_ATTRIBUTE, user.getRoleId());
+            if (demoAccessPolicy.isReadOnly(userId)
+                    && !demoAccessPolicy.permits(request.getMethod(), handler)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.getWriter().write("{\"code\":403,\"msg\":\"公开演示账号仅支持查看和 AI 问答，不能修改数据\",\"result\":null}");
+                return false;
+            }
             return true;
         } catch (JWTVerificationException | IllegalArgumentException ex) {
             String safeRequestUri = request.getRequestURI().replace('\r', '_').replace('\n', '_');

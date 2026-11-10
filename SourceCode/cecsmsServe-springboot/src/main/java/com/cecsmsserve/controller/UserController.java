@@ -39,8 +39,34 @@ public class UserController {
     }
 
     @PutMapping("/register")
-    public CommonResult<?> register(@RequestBody User user) {
-        return service.register(user);
+    public CommonResult<?> register(
+            @RequestBody RegistrationRequest registration,
+            HttpServletRequest request, HttpServletResponse response) {
+        if (registration == null || !captchaService.isValidKey(registration.captchaId())) {
+            return CommonResult.validateFailed("验证码标识无效");
+        }
+        CaptchaService.Verification verification = captchaService.consumeForRegistration(
+                registration.captchaId(), registration.verificationCode());
+        if (verification == CaptchaService.Verification.UNAVAILABLE) {
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            return new CommonResult<>(503, "验证码服务暂时不可用，请稍后重试", null);
+        }
+        if (verification != CaptchaService.Verification.MATCH) {
+            return new CommonResult<>(108, "验证码错误或已过期", null);
+        }
+        // Invalid or invented CAPTCHA challenges cannot drain the site's account budget.
+        AuthenticationRateLimiter.RegistrationDecision decision =
+                authenticationRateLimiter.acquireRegistration(request.getRemoteAddr());
+        if (!decision.available()) {
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            return new CommonResult<>(503, "注册服务暂时不可用，请稍后重试", null);
+        }
+        if (!decision.allowed()) {
+            response.setStatus(429);
+            response.setHeader("Retry-After", String.valueOf(decision.retryAfterSeconds()));
+            return new CommonResult<>(429, "注册尝试过于频繁，请稍后重试", null);
+        }
+        return service.register(registration.toUser());
     }
 
     @GetMapping("/getVerificationCode/{key}")

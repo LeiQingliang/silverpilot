@@ -9,6 +9,7 @@ import com.cecsmsserve.entity.ServiceOrder;
 import com.cecsmsserve.entity.ServiceType;
 import com.cecsmsserve.entity.UserActivity;
 import com.cecsmsserve.util.result.CommonResult;
+import com.cecsmsserve.util.DemoAccessPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,16 @@ public class ToolExecutor {
     private static final DateTimeFormatter MEAL_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final Set<String> MUTATING_TOOLS = Set.of(
             "join_activity", "book_service", "cancel_service_order", "book_recipe", "cancel_recipe_order");
+    private static final Map<String, Set<String>> ARGUMENTS = Map.ofEntries(
+            Map.entry("list_available_activities", Set.of()), Map.entry("list_services", Set.of()),
+            Map.entry("my_service_orders", Set.of()), Map.entry("my_health_reports", Set.of()),
+            Map.entry("my_recipe_orders", Set.of()), Map.entry("get_health_report_detail", Set.of("reportId")),
+            Map.entry("list_recipes", Set.of("keyword")), Map.entry("search_knowledge_base", Set.of("query")),
+            Map.entry("join_activity", Set.of("activityId")),
+            Map.entry("book_service", Set.of("typeSId", "reserveDate", "serviceAddress")),
+            Map.entry("cancel_service_order", Set.of("orderId")),
+            Map.entry("book_recipe", Set.of("recipeId", "orderTime", "peopleCount", "remark")),
+            Map.entry("cancel_recipe_order", Set.of("orderId")));
 
     private final IActivityService activityService;
     private final IUserActivityService userActivityService;
@@ -43,6 +54,7 @@ public class ToolExecutor {
     private final IRecipeService recipeService;
     private final IRecipeOrderService recipeOrderService;
     private final KnowledgeBaseService knowledgeBaseService;
+    private final DemoAccessPolicy demoAccessPolicy;
 
     @Autowired
     public ToolExecutor(
@@ -53,7 +65,8 @@ public class ToolExecutor {
             IReportService reportService,
             IRecipeService recipeService,
             IRecipeOrderService recipeOrderService,
-            KnowledgeBaseService knowledgeBaseService) {
+            KnowledgeBaseService knowledgeBaseService,
+            DemoAccessPolicy demoAccessPolicy) {
         this.activityService = activityService;
         this.userActivityService = userActivityService;
         this.serviceTypeService = serviceTypeService;
@@ -62,6 +75,17 @@ public class ToolExecutor {
         this.recipeService = recipeService;
         this.recipeOrderService = recipeOrderService;
         this.knowledgeBaseService = knowledgeBaseService;
+        this.demoAccessPolicy = java.util.Objects.requireNonNull(demoAccessPolicy);
+    }
+
+    /** Compatibility constructor for isolated tests and embedded consumers. */
+    public ToolExecutor(IActivityService activityService, IUserActivityService userActivityService,
+                        IServiceTypeService serviceTypeService, IServiceOrderService serviceOrderService,
+                        IReportService reportService, IRecipeService recipeService,
+                        IRecipeOrderService recipeOrderService, KnowledgeBaseService knowledgeBaseService) {
+        this(activityService, userActivityService, serviceTypeService, serviceOrderService,
+                reportService, recipeService, recipeOrderService, knowledgeBaseService,
+                new DemoAccessPolicy(false, "1,17"));
     }
 
     /** Kept for focused unit tests and embedded consumers. */
@@ -79,13 +103,14 @@ public class ToolExecutor {
     }
 
     public ToolPlan prepare(String toolName, Map<String, Object> rawArguments, Integer userId) {
-        if (userId == null) {
+        if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("用户身份无效");
         }
         if (toolName == null || toolName.isBlank()) {
             throw new IllegalArgumentException("工具名称无效");
         }
         Map<String, Object> args = rawArguments == null ? Map.of() : rawArguments;
+        validateAuthorization(toolName, args, userId);
         return switch (toolName) {
             case "list_available_activities" -> readPlan(toolName, "查询可报名活动");
             case "list_services" -> readPlan(toolName, "查询可预约服务");
@@ -106,6 +131,8 @@ public class ToolExecutor {
 
     public ToolResult execute(ToolPlan plan, Integer userId) {
         try {
+            if (plan == null) throw new IllegalArgumentException("工具计划无效");
+            validateAuthorization(plan.name(), plan.arguments(), userId);
             String content = switch (plan.name()) {
                 case "list_available_activities" -> listAvailableActivities();
                 case "list_services" -> listServices();
@@ -146,6 +173,22 @@ public class ToolExecutor {
 
     public boolean isMutating(String toolName) {
         return MUTATING_TOOLS.contains(toolName);
+    }
+
+    public boolean isReadOnly(Integer userId) {
+        return demoAccessPolicy.isReadOnly(userId);
+    }
+
+    private void validateAuthorization(String toolName, Map<String, Object> args, Integer userId) {
+        if (userId == null || userId < 1) throw new IllegalArgumentException("用户身份无效");
+        Set<String> allowed = ARGUMENTS.get(toolName);
+        if (allowed == null) throw new IllegalArgumentException("不支持的工具");
+        if (args == null || !allowed.containsAll(args.keySet())) {
+            throw new IllegalArgumentException("工具参数包含未允许的字段");
+        }
+        if (isReadOnly(userId) && isMutating(toolName)) {
+            throw new IllegalArgumentException("共享演示账号仅可查看，不能创建或执行写入操作");
+        }
     }
 
     private ToolPlan prepareJoinActivity(Map<String, Object> args, Integer userId) {
@@ -567,7 +610,10 @@ public class ToolExecutor {
         Object value = args.get(name);
         int parsed;
         try {
-            parsed = value instanceof Number number ? number.intValue() : Integer.parseInt(String.valueOf(value));
+            if (!(value instanceof Number) && !(value instanceof String)) {
+                throw new IllegalArgumentException();
+            }
+            parsed = new java.math.BigDecimal(value.toString()).intValueExact();
         } catch (RuntimeException ex) {
             throw new IllegalArgumentException(name + " 必须是整数");
         }
@@ -587,7 +633,10 @@ public class ToolExecutor {
 
     private String optionalString(Map<String, Object> args, String name, int maxLength) {
         Object value = args.get(name);
-        String parsed = value == null ? "" : value.toString().trim();
+        if (value != null && !(value instanceof String)) {
+            throw new IllegalArgumentException(name + " 必须是文本");
+        }
+        String parsed = value == null ? "" : ((String) value).trim();
         if (parsed.isEmpty()) {
             return null;
         }

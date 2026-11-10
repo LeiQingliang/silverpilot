@@ -25,7 +25,7 @@ class PromptTemplateServiceTests {
         assertFalse(prompt.contains("{{businessDate}}"));
         assertTrue(prompt.contains("模糊指令处理"));
         assertTrue(prompt.contains("第一行直接给结果"));
-        assertEquals("3.0.0", service.metadata(PromptTemplateService.AGENT).version());
+        assertEquals("3.1.0", service.metadata(PromptTemplateService.AGENT).version());
         assertEquals(16, service.metadata(PromptTemplateService.AGENT).sha256().length());
     }
 }

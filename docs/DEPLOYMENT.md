@@ -1,5 +1,11 @@
 # 开发、容器与部署说明
 
+## Railway 公网部署
+
+独立的四服务部署配置见 [Railway 部署指南](../deploy/railway/README.md)。该配置将知识和演示素材打入后端镜像，为 MySQL、Redis 和上传文件分别设置持久卷，并在首次初始化时替换公开演示账号密码。公网只开放前端 HTTPS 入口。
+
+配置文件和 CI 检查不代表已经上线；实际发布需要已连接的 Railway 账号及云端、外网验收。现有本机 Compose 启动路径保持不变。
+
 ## 1. 支持的运行模式
 
 | 模式 | MySQL | Redis | Spring Boot | Vue | 用途 |

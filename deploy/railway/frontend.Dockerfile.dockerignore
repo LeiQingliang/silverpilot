@@ -1,0 +1,29 @@
+# Only the frontend build inputs and this deployment's runtime files are sent.
+**
+!SourceCode/
+!SourceCode/cecsmsui-vue/
+!SourceCode/cecsmsui-vue/package.json
+!SourceCode/cecsmsui-vue/package-lock.json
+!SourceCode/cecsmsui-vue/.npmrc
+!SourceCode/cecsmsui-vue/index.html
+!SourceCode/cecsmsui-vue/vite.config.js
+!SourceCode/cecsmsui-vue/src/
+!SourceCode/cecsmsui-vue/src/**
+!SourceCode/cecsmsui-vue/public/
+!SourceCode/cecsmsui-vue/public/**
+!deploy/
+!deploy/railway/
+!deploy/railway/frontend.Dockerfile
+!deploy/railway/frontend.Dockerfile.dockerignore
+!deploy/railway/frontend-entrypoint.sh
+!deploy/railway/nginx.conf.template
+# These exclusions also apply inside otherwise allowed source/asset trees.
+**/.env
+**/.env.*
+**/config/
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/node_modules/
+**/.git/

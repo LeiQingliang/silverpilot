@@ -9,10 +9,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
@@ -20,6 +25,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class UserControllerTests {
 
@@ -118,5 +125,101 @@ class UserControllerTests {
 
         assertEquals(400, result.getCode());
         verify(captchaService, never()).consumeMatches(anyString(), anyString());
+    }
+
+    @Test
+    void registrationRequiresCaptchaAndDoesNotAcceptLegacyUnguardedPayload() {
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        CommonResult<?> result = controller.register(registration(null, null), request, response);
+        assertEquals(400, result.getCode());
+        verify(userService, never()).register(any());
+        verify(rateLimiter, never()).acquireRegistration(anyString());
+    }
+
+    @Test
+    void registrationRejectsWrongCaptchaWithoutCreatingAccount() {
+        allowRegistrationAttempt();
+        when(captchaService.consumeForRegistration("registration-test", "ABCD"))
+                .thenReturn(CaptchaService.Verification.MISMATCH);
+        CommonResult<?> result = controller.register(
+                registration("registration-test", "ABCD"), request, new MockHttpServletResponse());
+        assertEquals(108, result.getCode());
+        verify(userService, never()).register(any());
+        verify(rateLimiter, never()).acquireRegistration(anyString());
+    }
+
+    @Test
+    void registrationLimitReturns429AndRetryAfterWithoutCreatingAccount() {
+        when(captchaService.isValidKey("registration-test")).thenReturn(true);
+        when(captchaService.consumeForRegistration("registration-test", "ABCD"))
+                .thenReturn(CaptchaService.Verification.MATCH);
+        when(rateLimiter.acquireRegistration("203.0.113.7"))
+                .thenReturn(new AuthenticationRateLimiter.RegistrationDecision(false, true, 120));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        CommonResult<?> result = controller.register(registration("registration-test", "ABCD"), request, response);
+        assertEquals(429, result.getCode());
+        assertEquals(429, response.getStatus());
+        assertEquals("120", response.getHeader("Retry-After"));
+        verify(userService, never()).register(any());
+    }
+
+    @Test
+    void unavailableRegistrationBudgetOrCaptchaFailsClosed() {
+        when(captchaService.isValidKey("registration-test")).thenReturn(true);
+        when(captchaService.consumeForRegistration("registration-test", "ABCD"))
+                .thenReturn(CaptchaService.Verification.MATCH);
+        when(rateLimiter.acquireRegistration("203.0.113.7"))
+                .thenReturn(new AuthenticationRateLimiter.RegistrationDecision(false, false, 60));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        assertEquals(503, controller.register(registration("registration-test", "ABCD"), request, response).getCode());
+        assertEquals(503, response.getStatus());
+
+        allowRegistrationAttempt();
+        when(captchaService.consumeForRegistration("registration-test", "ABCD"))
+                .thenReturn(CaptchaService.Verification.UNAVAILABLE);
+        MockHttpServletResponse captchaResponse = new MockHttpServletResponse();
+        assertEquals(503, controller.register(
+                registration("registration-test", "ABCD"), request, captchaResponse).getCode());
+        assertEquals(503, captchaResponse.getStatus());
+        verify(userService, never()).register(any());
+    }
+
+    @Test
+    void publicRegistrationDtoDropsIdentityRoleAndRewardFields() throws Exception {
+        when(captchaService.isValidKey("registration-test")).thenReturn(true);
+        when(rateLimiter.acquireRegistration(anyString()))
+                .thenReturn(new AuthenticationRateLimiter.RegistrationDecision(true, true, 0));
+        when(captchaService.consumeForRegistration("registration-test", "ABCD"))
+                .thenReturn(CaptchaService.Verification.MATCH);
+        when(userService.register(any())).thenReturn(CommonResult.success(new User()));
+        var mvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mvc.perform(put("/user/register").contentType(MediaType.APPLICATION_JSON).content("""
+                {"username":"new_test_user","password":"test-only-password","name":"Test User",
+                 "telephone":"test-phone","idNum":"test-identity","sex":"男","address":"测试地址",
+                 "captchaId":"registration-test","verificationCode":"ABCD",
+                 "id":1,"roleId":1,"role":1,"point":9999,"department":"privileged","token":"untrusted"}
+                """))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(200));
+        ArgumentCaptor<User> captured = ArgumentCaptor.forClass(User.class);
+        verify(userService).register(captured.capture());
+        User submitted = captured.getValue();
+        assertEquals("new_test_user", submitted.getUsername());
+        assertEquals("test-only-password", submitted.getPassword());
+        assertNull(submitted.getId());
+        assertNull(submitted.getRoleId());
+        assertNull(submitted.getPoint());
+        assertNull(submitted.getDepartment());
+        assertNull(submitted.getToken());
+    }
+
+    private void allowRegistrationAttempt() {
+        when(captchaService.isValidKey("registration-test")).thenReturn(true);
+        when(rateLimiter.acquireRegistration("203.0.113.7"))
+                .thenReturn(new AuthenticationRateLimiter.RegistrationDecision(true, true, 0));
+    }
+
+    private RegistrationRequest registration(String captchaId, String code) {
+        return new RegistrationRequest("new_test_user", "test-only-password", "Test User", "test-phone",
+                "test-identity", "男", "测试地址", captchaId, code);
     }
 }

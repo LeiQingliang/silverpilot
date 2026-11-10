@@ -63,7 +63,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         } else if (exist2 != null) {
             result.phoneExist(); //105
         } else {
+            // Public registration cannot choose database identity or staff/reward fields.
+            user.setId(null);
             user.setRoleId(4);
+            user.setDepartment(null);
+            user.setPoint(0);
+            user.setToken(null);
             user.setPassword(encodePassword(user.getPassword()));
             String birthdayString = user.getIdNum().substring(6, 14);
             LocalDate birthday = LocalDate.parse(birthdayString, DateTimeFormatter.BASIC_ISO_DATE);

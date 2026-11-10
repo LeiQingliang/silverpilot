@@ -1,0 +1,34 @@
+name: Railway deployment smoke
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - deploy/railway/**
+      - SourceCode/cecsmsServe-springboot/src/main/java/com/cecsmsserve/service/impl/UserServiceImpl.java
+      - SourceCode/cecsmsServe-springboot/src/test/java/com/cecsmsserve/service/UserRegistrationSecurityTests.java
+      - .github/workflows/railway-deployment.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: railway-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  railway-smoke:
+    name: Railway images and isolated integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and exercise the isolated deployment
+        shell: bash
+        run: bash deploy/railway/smoke.sh

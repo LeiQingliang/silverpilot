@@ -64,6 +64,74 @@ jobs:
         shell: pwsh
         run: ./scripts/verify-project.ps1
 
+  redis-integration:
+    name: Redis registration and AI quota integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          cache-dependency-path: SourceCode/cecsmsServe-springboot/pom.xml
+
+      - name: Start isolated Redis from the deployment image
+        shell: bash
+        run: |
+          set +x
+          set -euo pipefail
+          test_redis_password="$(openssl rand -hex 32)"
+          echo "::add-mask::$test_redis_password"
+          printf 'CECSMS_TEST_REDIS_PASSWORD=%s\n' "$test_redis_password" >> "$GITHUB_ENV"
+          export REDIS_PASSWORD="$test_redis_password"
+          export REDISCLI_AUTH="$test_redis_password"
+          docker build --file deploy/railway/redis.Dockerfile --tag silverpilot-redis-integration .
+          docker run --detach --name silverpilot-redis-integration \
+            --publish 127.0.0.1:6379:6379 --env REDIS_PASSWORD silverpilot-redis-integration
+          for attempt in $(seq 1 30); do
+            if docker exec --env REDISCLI_AUTH silverpilot-redis-integration redis-cli --raw ping 2>/dev/null | grep -qx PONG; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'Isolated Redis did not become ready.' >&2
+          exit 1
+
+      - name: Exercise real Redis Lua and one-time CAPTCHA across instances
+        shell: bash
+        working-directory: SourceCode/cecsmsServe-springboot
+        env:
+          CECSMS_TEST_REDIS_HOST: "127.0.0.1"
+          CECSMS_TEST_REDIS_PORT: "6379"
+        run: |
+          bash ./mvnw -B -ntp -Dtest=AiQuotaRedisIntegrationTests,RegistrationRedisIntegrationTests test
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          suites = (
+              'com.cecsmsserve.service.AiQuotaRedisIntegrationTests',
+              'com.cecsmsserve.util.RegistrationRedisIntegrationTests',
+          )
+          for suite in suites:
+              report = ET.parse(Path('target/surefire-reports') / f'TEST-{suite}.xml').getroot()
+              assert int(report.attrib['tests']) > 0, f'{suite}: no integration tests ran'
+              assert all(int(report.attrib.get(key, '0')) == 0 for key in ('failures', 'errors', 'skipped')), \
+                  f'{suite}: integration tests failed or were skipped'
+          print('PASS: real Redis registration and AI quota tests executed without skips.')
+          PY
+
+      - name: Remove isolated Redis
+        if: always()
+        shell: bash
+        run: docker rm --force --volumes silverpilot-redis-integration >/dev/null 2>&1 || true
+
   java-sca:
     name: Java dependency vulnerability scan
     runs-on: windows-latest

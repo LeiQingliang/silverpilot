@@ -1,0 +1,8 @@
+**
+!redis/
+!redis/docker-entrypoint.sh
+!deploy/
+!deploy/railway/
+!deploy/railway/redis-entrypoint.sh
+!deploy/railway/redis.Dockerfile
+!deploy/railway/redis.Dockerfile.dockerignore

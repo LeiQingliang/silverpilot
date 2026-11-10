@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -21,6 +22,41 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CaptchaServiceTests {
+
+    @Test
+    void registrationCannotUseLocalCaptchaWhenSharedStorageIsRequired() {
+        CaptchaService service = new CaptchaService(
+                Duration.ofMinutes(5), 10, Clock.systemUTC(), null, false, true);
+        assertTrue(service.store("register-challenge", "ABCD"));
+        assertEquals(CaptchaService.Verification.UNAVAILABLE,
+                service.consumeForRegistration("register-challenge", "ABCD"));
+        // Login retains its original bounded local fallback.
+        assertTrue(service.consumeMatches("register-challenge", "ABCD"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void registrationFailsClosedIfRedisFailsAfterChallengeIssuance() {
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+        ValueOperations<String, String> values = mock(ValueOperations.class);
+        when(redis.opsForValue()).thenReturn(values);
+        when(values.getAndDelete(anyString())).thenThrow(new IllegalStateException("test Redis failure"));
+        CaptchaService service = new CaptchaService(
+                Duration.ofMinutes(5), 10, Clock.systemUTC(), redis, true, true);
+        assertTrue(service.store("register-challenge", "ABCD"));
+        assertEquals(CaptchaService.Verification.UNAVAILABLE,
+                service.consumeForRegistration("register-challenge", "ABCD"));
+    }
+
+    @Test
+    void registrationCaptchaIsConsumedOnWrongAnswerAndCannotReplay() {
+        CaptchaService service = new CaptchaService(Duration.ofMinutes(5), 10, Clock.systemUTC(), null, false);
+        assertTrue(service.store("register-challenge", "ABCD"));
+        assertEquals(CaptchaService.Verification.MISMATCH,
+                service.consumeForRegistration("register-challenge", "WRONG"));
+        assertEquals(CaptchaService.Verification.MISMATCH,
+                service.consumeForRegistration("register-challenge", "ABCD"));
+    }
 
     @Test
     void localChallengeIsCaseInsensitiveOneTimeAndExpires() {

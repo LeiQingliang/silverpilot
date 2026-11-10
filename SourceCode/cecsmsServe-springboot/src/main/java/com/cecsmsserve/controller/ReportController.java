@@ -2,6 +2,7 @@ package com.cecsmsserve.controller;
 
 import com.cecsmsserve.entity.Report;
 import com.cecsmsserve.service.DeepSeekClient;
+import com.cecsmsserve.service.AiResourceGuard;
 import com.cecsmsserve.service.DeepSeekClient.DeepSeekException;
 import com.cecsmsserve.service.IReportService;
 import com.cecsmsserve.service.IUserService;
@@ -138,6 +139,8 @@ public class ReportController {
 
             String analysis = deepSeekClient.firstText(deepSeekClient.chatCompletion(body));
             return CommonResult.success(analysis + "\n\n" + MEDICAL_DISCLAIMER);
+        } catch (AiResourceGuard.Rejected ex) {
+            throw ex;
         } catch (DeepSeekException ex) {
             return CommonResult.error(ex.getMessage());
         } catch (Exception ex) {

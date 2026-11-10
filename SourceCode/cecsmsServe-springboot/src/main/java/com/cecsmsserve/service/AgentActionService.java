@@ -238,6 +238,12 @@ public class AgentActionService {
                 .set(AgentAction::getResultMessage, "确认已过期")
                 .set(AgentAction::getArgumentsJson, null)
                 .set(AgentAction::getUpdatedAt, now));
+        return readOnlyHistory(userId, requestedLimit);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActionView> readOnlyHistory(Integer userId, int requestedLimit) {
+        if (userId == null || userId < 1) throw new IllegalArgumentException("用户身份无效");
         int limit = Math.max(1, Math.min(requestedLimit, historyLimit));
         return mapper.selectList(new LambdaQueryWrapper<AgentAction>()
                         .eq(AgentAction::getUserId, userId)

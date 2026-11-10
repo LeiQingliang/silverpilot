@@ -1,0 +1,98 @@
+# Isolated integration test only. smoke.sh assigns a unique project and removes
+# its temporary volumes on exit. This file is not the Railway service config.
+services:
+  mysql:
+    build:
+      context: ../..
+      dockerfile: deploy/railway/mysql.Dockerfile
+    environment:
+      MYSQL_DATABASE: a_old
+      MYSQL_USER: cecsms
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?required}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?required}
+      SILVERPILOT_ADMIN_PASSWORD: ${SILVERPILOT_ADMIN_PASSWORD:?required}
+      SILVERPILOT_VISITOR_PASSWORD: ${SILVERPILOT_VISITOR_PASSWORD:?required}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /var/lib/mysql/.silverpilot-railway-initialized-v1 && MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysql --protocol=TCP -h127.0.0.1 -uroot --database=a_old --skip-column-names --execute='SELECT 1 FROM `user` LIMIT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 45s
+
+  redis:
+    build:
+      context: ../..
+      dockerfile: deploy/railway/redis.Dockerfile
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?required}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli --raw ping | grep -qx PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: deploy/railway/backend.Dockerfile
+    environment:
+      PORT: "8083"
+      CECSMS_SERVER_PORT: "8083"
+      SPRING_PROFILES_ACTIVE: docker
+      RAILWAY_ENVIRONMENT_ID: isolated-smoke-test
+      RAILWAY_VOLUME_MOUNT_PATH: /app/uploads
+      CECSMS_DB_URL: jdbc:mysql://mysql:3306/a_old?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia%2FShanghai&sslMode=DISABLED&allowPublicKeyRetrieval=true
+      CECSMS_DB_USERNAME: cecsms
+      CECSMS_DB_PASSWORD: ${MYSQL_PASSWORD:?required}
+      CECSMS_REDIS_HOST: redis
+      CECSMS_REDIS_PORT: "6379"
+      CECSMS_REDIS_PASSWORD: ${REDIS_PASSWORD:?required}
+      CECSMS_REDIS_ENABLED: "true"
+      CECSMS_REDIS_HEALTH_ENABLED: "true"
+      CECSMS_REGISTRATION_REDIS_FAIL_CLOSED: "true"
+      CECSMS_JWT_SECRET: ${CECSMS_JWT_SECRET:?required}
+      CECSMS_MCP_API_KEY: ${CECSMS_MCP_API_KEY:?required}
+      CECSMS_CORS_ALLOWED_ORIGINS: http://127.0.0.1:8082
+      CECSMS_FORWARD_HEADERS_STRATEGY: native
+      CECSMS_AI_MOCK_ENABLED: "false"
+      CECSMS_LOG_LEVEL: WARN
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--noproxy", "*", "http://127.0.0.1:8083/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: deploy/railway/frontend.Dockerfile
+    environment:
+      PORT: "8080"
+      SILVERPILOT_BACKEND_HOST: backend
+    ports:
+      - "127.0.0.1:8082:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+
+volumes:
+  mysql-data:
+  redis-data:
+  uploads:
