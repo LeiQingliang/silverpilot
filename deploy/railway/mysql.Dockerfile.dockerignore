@@ -1,0 +1,9 @@
+**
+!database/
+!database/a_old.sql
+!deploy/
+!deploy/railway/
+!deploy/railway/mysql.Dockerfile
+!deploy/railway/mysql.Dockerfile.dockerignore
+!deploy/railway/mysql-init-accounts.sh
+!deploy/railway/mysql-entrypoint.sh

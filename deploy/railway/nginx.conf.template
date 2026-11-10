@@ -1,0 +1,134 @@
+worker_processes auto;
+pid /tmp/nginx.pid;
+
+# Nginx error messages may contain the complete request URI, including login
+# query parameters. Keep runtime diagnostics in the query-free access log.
+error_log /dev/null;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    server_tokens off;
+    sendfile on;
+    keepalive_timeout 65;
+    client_max_body_size 105m;
+
+    client_body_temp_path /tmp/client_temp;
+    proxy_temp_path /tmp/proxy_temp;
+    fastcgi_temp_path /tmp/fastcgi_temp;
+    uwsgi_temp_path /tmp/uwsgi_temp;
+    scgi_temp_path /tmp/scgi_temp;
+
+    # This deployment accepts public traffic only through Railway's HTTP edge,
+    # whose documented client-address header is X-Real-IP. Never create a TCP
+    # proxy to this service. The project private network is a trusted boundary.
+    # Reject non-address characters and use the peer address if the header is
+    # absent/invalid. Public acceptance tests must verify edge overwrites of
+    # spoofed X-Real-IP headers before relying on per-client rate limits.
+    map $http_x_real_ip $silverpilot_client_ip {
+        default $remote_addr;
+        ~^[0-9A-Fa-f:.]+$ $http_x_real_ip;
+    }
+    map $status $silverpilot_retry_after {
+        default "";
+        429 "30";
+    }
+    log_format safe '$silverpilot_client_ip [$time_local] "$request_method $uri" '
+                    '$status $body_bytes_sent $request_time';
+    access_log /dev/stdout safe;
+
+    resolver @@DNS_RESOLVERS@@ valid=30s;
+    resolver_timeout 5s;
+    upstream silverpilot_backend {
+        zone silverpilot_backend 64k;
+        server @@BACKEND_HOST@@:8083 resolve;
+        keepalive 16;
+    }
+
+    # Two immediate attempts are allowed, then the bucket refills at 2/minute.
+    limit_req_zone $silverpilot_client_ip zone=registration:10m rate=2r/m;
+    limit_req_status 429;
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript image/svg+xml;
+
+    server {
+        listen 8080;
+        listen [::]:8080;
+        server_name _;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        set $silverpilot_cache_control "no-cache";
+        add_header Cache-Control $silverpilot_cache_control;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "camera=(self), geolocation=(), microphone=(self)" always;
+        add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" always;
+        add_header Retry-After $silverpilot_retry_after always;
+
+        # Replace all forwarding identities; do not append visitor-supplied
+        # chains. Railway terminates HTTPS before this HTTP-only container.
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $silverpilot_client_ip;
+        proxy_set_header X-Forwarded-For $silverpilot_client_ip;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header Forwarded "";
+        proxy_set_header Connection "";
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 95s;
+
+        # Liveness checks only Nginx. Readiness also checks backend dependencies.
+        location = /healthz {
+            access_log off;
+            default_type text/plain;
+            return 200 'ok';
+        }
+        location = /readyz {
+            proxy_pass http://silverpilot_backend/actuator/health;
+        }
+        location = /api/actuator/health {
+            proxy_pass http://silverpilot_backend/actuator/health;
+        }
+
+        # Exact health above remains public; MCP and other actuator endpoints
+        # stay private, including semicolon path-parameter variants.
+        location ~ "^/api/(mcp|actuator)(/|;|$)" {
+            return 404;
+        }
+
+        location = /api/user/register {
+            limit_req zone=registration burst=1 nodelay;
+            proxy_pass http://silverpilot_backend/user/register;
+        }
+        # Spring may normalize a trailing slash or matrix parameters. Route
+        # these variants through the same rate limit rather than a bypass.
+        location ~ "^/api/user(;[^/]*)?/register(/|;|$)" {
+            limit_req zone=registration burst=1 nodelay;
+            rewrite ^/api/(.*)$ /$1 break;
+            proxy_pass http://silverpilot_backend;
+        }
+        location /api/ {
+            proxy_pass http://silverpilot_backend/;
+        }
+        location ~ ^/(image|file|video)/ {
+            set $silverpilot_cache_control "public, max-age=31536000, immutable";
+            proxy_hide_header Cache-Control;
+            proxy_pass http://silverpilot_backend;
+        }
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+        location ~* \.(?:css|js|png|jpg|jpeg|gif|svg|ico|webp|woff2?)$ {
+            set $silverpilot_cache_control "public, max-age=31536000, immutable";
+            try_files $uri =404;
+        }
+    }
+}
