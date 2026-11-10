@@ -187,8 +187,8 @@ http {
 
         # Define every limit together; no location may override this inherited
         # list. Nodelay rejects floods instead of holding queued connections.
-        limit_req zone=site_rate burst=80 nodelay;
-        limit_req zone=client_rate burst=40 nodelay;
+        limit_req zone=site_rate burst=160 nodelay;
+        limit_req zone=client_rate burst=80 nodelay;
         limit_req zone=api_rate burst=30 nodelay;
         limit_req zone=api_client_rate burst=13 nodelay;
         limit_req zone=login_rate burst=3 nodelay;

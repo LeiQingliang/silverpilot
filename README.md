@@ -59,7 +59,7 @@
 
 项目已于 **2026-11-10** 部署至 Railway，无需本地安装，也无需 Railway 或 GitHub 账号。使用 SilverPilot 账号登录后即可体验业务查询与“小伴服务”AI 助手。
 
-**本次安全加固状态：**下列只读策略与配额为本次生产部署配置，代码已实现，尚待新版云端部署与复验；首发验收不代表这些新增控制已经完成线上验证。
+**安全加固已上线（2026-11-10）：**两个共享账号的业务写入和 AI 确认接口均已实测返回 `403`，独立私有管理员仍可维护自己的账号；真实 DeepSeek 问答与只读工具查询通过。未登录 AI、过大请求、非法方法及缺少注册验证码的请求均按预期被拒绝。配额和并发故障场景使用隔离测试验证，未对公网做压力攻击测试。
 
 | 演示角色 | 用户名 | 密码 | 公网站点权限 |
 | --- | --- | --- | --- |
@@ -92,7 +92,7 @@
 
 这些控制用于减小滥用、提示注入和费用耗尽的影响，不构成“100% 免攻击”、无限免费调用或长期在线承诺。提示词与 RAG 不能替代后端授权和配额；设计依据包括 [OWASP Unbounded Consumption](https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/) 与 [OWASP Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)。Railway 的 [Under Attack Mode](https://docs.railway.com/networking/waf) 会影响未验证的非浏览器客户端，本项目不将其默认常开视为正常访问的前提。
 
-[Railway 部署与配额配置](deploy/railway/README.md) · [入口规则与验证](deploy/railway/EDGE_PROTECTION.md) · [首发部署变更（PR #7）](https://github.com/LeiQingliang/silverpilot/pull/7) · [首发四服务与持久化验收](https://github.com/LeiQingliang/silverpilot/actions/runs/42757989374)
+[Railway 部署与配额配置](deploy/railway/README.md) · [入口规则与验证](deploy/railway/EDGE_PROTECTION.md) · [部署及安全加固变更（PR #7）](https://github.com/LeiQingliang/silverpilot/pull/7) · [持续验证与真实 Redis 测试](https://github.com/LeiQingliang/silverpilot/actions/workflows/ci.yml) · [四服务集成检查](https://github.com/LeiQingliang/silverpilot/actions/workflows/railway-deployment.yml)
 
 ### 演示视频
 

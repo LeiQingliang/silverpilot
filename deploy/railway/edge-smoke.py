@@ -192,6 +192,22 @@ def protocol_checks(port):
         expect(port, route, 413, method="POST", headers={"Content-Length": str(size)})
 
 
+def bounded_burst(port, requests, root, zone):
+    # Nginx can admit the initial request in addition to `burst`, and elapsed
+    # milliseconds can refill a bucket. Check bounded rejection and the actual
+    # rejecting zone instead of assuming one exact first-rejected index. The
+    # stub always returns 200 here, so neither it nor an unrelated limit can
+    # make a missing group limiter pass this assertion.
+    results = [request(port, route, method=method, ip=ip) for route, method, ip in requests]
+    statuses = [result[0] for result in results]
+    assert statuses[0] == 200 and all(status in (200, 429) for status in statuses), (zone, statuses)
+    assert 429 in statuses, (zone, statuses)
+    for status, headers, _ in results:
+        if status == 429:
+            assert int(headers["retry-after"]) >= 1
+    assert f'by zone "{zone}"' in (root / "logs/error.log").read_text(), (zone, statuses)
+
+
 def run_local(binary, docker_image=None):
     checks = 0
     with local_edge(binary, docker_image) as (port, _, root):
@@ -211,35 +227,37 @@ def run_local(binary, docker_image=None):
         expect(port, "/api/upload/image", 200, method="POST", body=b"x" * 300000, ip="192.0.2.4")
         checks += 30
     groups = [
-        ("login", "POST", ["/api/user/login/a", "/API/USER/LOGIN/b/", "/api//user/login/c", "/api/user/%6cogin/d"]),
-        ("captcha", "GET", [f"/api/user/getVerificationCode/key-{i}" for i in range(6)]),
-        ("registration", "PUT", ["/api/user/register", "/API/USER/REGISTER/", "/api/user/%72egister"]),
-        ("admin", "GET", ["/api/chat/admin/overview"] * 10),
-        ("upload", "POST", ["/api/upload/image", "/API/UPLOAD/file/", "/api/upload/video"]),
-        ("api", "GET", ["/api/example"] * 14),
+        ("login", "POST", ["/api/user/login/a", "/API/USER/LOGIN/b/", "/api//user/login/c", "/api/user/%6cogin/d"], 6, "login_rate"),
+        ("captcha", "GET", [f"/api/user/getVerificationCode/key-{i}" for i in range(6)], 8, "captcha_rate"),
+        ("registration", "PUT", ["/api/user/register", "/API/USER/REGISTER/", "/api/user/%72egister"], 5, "registration_rate"),
+        ("admin", "GET", ["/api/chat/admin/overview"], 13, "admin_client_rate"),
+        ("upload", "POST", ["/api/upload/image", "/API/UPLOAD/file/", "/api/upload/video"], 4, "upload_rate"),
+        ("api", "GET", ["/api/example"], 24, "api_client_rate"),
     ]
-    for group, method, paths in groups:
-        with local_edge(binary, docker_image) as (port, _, _):
-            for route in paths[:-1]:
-                expect(port, route, 200, method=method)
-            expect(port, paths[-1], 429, method=method)
-            # A different source keeps an independent per-IP bucket.
+    for group, method, paths, attempts, zone in groups:
+        with local_edge(binary, docker_image) as (port, _, root):
+            bounded_burst(port, [(paths[i % len(paths)], method, "192.0.2.1") for i in range(attempts)], root, zone)
             if group in ("login", "captcha", "registration", "upload"):
+                # All path/key variants share the depleted bucket. These groups
+                # refill slowly, so a scheduler tick cannot create an off-by-one.
+                for route in paths:
+                    expect(port, route, 429, method=method)
+                # A different source keeps an independent per-IP bucket.
                 expect(port, paths[-1], 200, method=method, ip="192.0.2.55")
-            checks += len(paths)
-    with local_edge(binary, docker_image) as (port, _, _):
-        expect(port, "/api/chat", 200, method="POST")
-        expect(port, "/api/report/analyze/1", 200)
-        expect(port, "/API/CHAT/care-plan/", 429, method="POST")
-        checks += 3
-    with local_edge(binary, docker_image) as (port, _, _):
-        for i in range(4):
-            expect(port, "/api/chat", 200, method="POST", ip=f"192.0.2.{i + 1}")
-        expect(port, "/api/report/analyze/1", 429, ip="192.0.2.99")
-        checks += 5
-    for per_ip, count, zone in [(True, 70, "client_rate"), (False, 180, "site_rate")]:
+                checks += len(paths) + 1
+            checks += attempts
+    with local_edge(binary, docker_image) as (port, _, root):
+        ai_paths = [("/api/chat", "POST"), ("/api/report/analyze/1", "GET"), ("/API/CHAT/care-plan/", "POST")]
+        bounded_burst(port, [(*ai_paths[i % len(ai_paths)], "192.0.2.1") for i in range(5)], root, "ai_client_rate")
+        for route, method in ai_paths:
+            expect(port, route, 429, method=method)
+        checks += 8
+    with local_edge(binary, docker_image) as (port, _, root):
+        bounded_burst(port, [("/api/chat", "POST", f"192.0.2.{i + 1}") for i in range(7)], root, "ai_rate")
+        checks += 7
+    for per_ip, count, zone in [(True, 150, "client_rate"), (False, 400, "site_rate")]:
         with local_edge(binary, docker_image) as (port, _, root), ThreadPoolExecutor(max_workers=8) as pool:
-            results = list(pool.map(lambda i: request(port, "/app.js", ip="192.0.2.1" if per_ip else f"192.0.2.{i + 1}"), range(count)))
+            results = list(pool.map(lambda i: request(port, "/app.js", ip="192.0.2.1" if per_ip else f"198.18.{i // 254}.{i % 254 + 1}"), range(count)))
             assert all(r[0] in (200, 429) for r in results)
             assert any(r[0] == 429 for r in results)
             assert f'by zone "{zone}"' in (root / "logs/error.log").read_text()

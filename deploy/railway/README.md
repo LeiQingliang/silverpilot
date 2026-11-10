@@ -2,7 +2,7 @@
 
 本目录将 Vue、Spring Boot、MySQL 和 Redis 四服务部署到 Railway。公开演示已于 **2026-11-10** 首次上线：[SilverPilot](https://silverpilot.up.railway.app/login)，首发已验证真实 DeepSeek 文字回复与业务工具查询。
 
-**本次安全加固状态：**本文描述新增只读账号策略、入口限制和 Redis 预算的生产配置；新版云端部署与复验尚待完成。首次上线记录不能证明新增控制已在云端生效；完成复验后再更新状态、提交号与验收时间。
+**安全加固已上线（2026-11-10）：**后端 `9d1641ba29a38134d48c12424ab6ff96a4c07a7e` 已运行并通过公网权限与真实模型复验：两个演示账号写入和 AI 确认均返回 `403`，私有管理员维护正常；真实 DeepSeek 文字回复和只读活动工具调用成功。未登录 AI 返回 `401`，AI 过大请求 `413`，非法登录方法 `405`，注册缺验证码返回应用错误 `400`；伪造转发 IP 未改变真实来源，安全日志省略查询参数。全站预算、并发与 Redis 故障在隔离环境测试，未在生产进行压力攻击测试。
 
 ## 服务配置
 
@@ -93,7 +93,7 @@ MCP 不提供公网访问；不需要对外 MCP 时保持 `CECSMS_MCP_API_KEY` �
 
 ### frontend
 
-设置 `PORT=8080`。默认上游为 `backend.railway.internal:8083`；只有确实修改后端服务名时才设置 `SILVERPILOT_BACKEND_HOST`。
+设置 `PORT=8080` 与 `SILVERPILOT_PUBLIC_HOST=silverpilot.up.railway.app`。默认上游为 `backend.railway.internal:8083`；只有确实修改后端服务名时才设置 `SILVERPILOT_BACKEND_HOST`。重命名过 Railway 自动域名时，其内部默认域名可能滞后，必须明确设置实际公开 Host，否则会被允许列表拒绝。
 
 公开 Host 按 `SILVERPILOT_PUBLIC_HOST`、`RAILWAY_PUBLIC_DOMAIN` 的顺序读取，最后回退到 `silverpilot.up.railway.app`。更换域名时必须同步 Host 允许值与后端 CORS。仅保留本机及 Railway 健康检查 Host 的必要访问。
 
