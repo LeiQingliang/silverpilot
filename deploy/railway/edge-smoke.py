@@ -80,6 +80,27 @@ class Stub(BaseHTTPRequestHandler):
     do_GET = do_HEAD = do_POST = do_PUT = do_DELETE = do_PATCH = do_OPTIONS = handle_request
 
 
+def render_config(template, root, port, upstream_port):
+    # Replace original template tokens in ONE pass. Linux roots already start
+    # with /tmp/; chained replacements would rewrite inserted mime/html paths
+    # a second time into /tmp/<root>/<root>/... . Never rescan inserted values.
+    replacements = {
+        "@@BACKEND_HOST@@": "127.0.0.1",
+        ":8083 resolve": f":{upstream_port} resolve",
+        "@@PUBLIC_HOST@@": "public.example.test",
+        "@@DNS_RESOLVERS@@": "127.0.0.1",
+        "listen 8080;": f"listen 127.0.0.1:{port};",
+        "listen [::]:8080;": "",
+        "/etc/nginx/mime.types": (root / "mime.types").as_posix(),
+        "/usr/share/nginx/html": (root / "html").as_posix(),
+        "/tmp/": root.as_posix() + "/",
+        "/dev/null": (root / "logs/error.log").as_posix(),
+        "/dev/stdout": (root / "logs/access.log").as_posix(),
+    }
+    pattern = "|".join(re.escape(key) for key in sorted(replacements, key=len, reverse=True))
+    return re.sub(pattern, lambda match: replacements[match.group()], template)
+
+
 @contextmanager
 def local_edge(binary, docker_image=None):
     with tempfile.TemporaryDirectory(prefix="silverpilot-edge-") as directory:
@@ -99,17 +120,7 @@ def local_edge(binary, docker_image=None):
             listener.bind(("127.0.0.1", 0))
             port = listener.getsockname()[1]
         template = Path(__file__).with_name("nginx.conf.template").read_text()
-        config = (template.replace("@@BACKEND_HOST@@", "127.0.0.1")
-                  .replace(":8083 resolve", f":{upstream.server_port} resolve")
-                  .replace("@@PUBLIC_HOST@@", "public.example.test")
-                  .replace("@@DNS_RESOLVERS@@", "127.0.0.1")
-                  .replace("listen 8080;", f"listen 127.0.0.1:{port};")
-                  .replace("listen [::]:8080;", "")
-                  .replace("/etc/nginx/mime.types", (root / "mime.types").as_posix())
-                  .replace("/usr/share/nginx/html", (root / "html").as_posix())
-                  .replace("/tmp/", root.as_posix() + "/")
-                  .replace("/dev/null", (root / "logs/error.log").as_posix())
-                  .replace("/dev/stdout", (root / "logs/access.log").as_posix()))
+        config = render_config(template, root, port, upstream.server_port)
         (root / "nginx.conf").write_text(config)
         config_args = ["-p", root.as_posix() + "/", "-c", "nginx.conf"]
         container_name = root.name
