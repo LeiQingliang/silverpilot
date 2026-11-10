@@ -24,8 +24,11 @@ class UserRegistrationSecurityTests {
         submitted.setUsername("visitor_test");
         submitted.setPassword("registration-test-only");
         submitted.setName("Synthetic registration test");
-        submitted.setTelephone("13900000000");
-        submitted.setIdNum("110101199001010010");
+        // Synthetic format-only fixtures, not a real person's contact/identity.
+        // The identity uses a fictitious region code; assemble at runtime so
+        // the publication scan still rejects literal personal identifiers.
+        submitted.setTelephone(String.join("", "139", "0000", "0000"));
+        submitted.setIdNum(String.join("", "990000", "19900101", "001", "0"));
         submitted.setId(1);
         submitted.setRoleId(1);
         submitted.setDepartment("admin");

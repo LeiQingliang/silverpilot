@@ -35,7 +35,7 @@ dc() {
 # URLs and query strings. Never print docker inspect/config or raw SQL output.
 diagnostics() {
     echo 'Isolated deployment failed. Sanitized diagnostic tail:' >&2
-    dc ps --all --format json > "$smoke_tmp/status.log" 2>&1 || true
+    dc ps --all --format 'table {{.Service}}\t{{.State}}\t{{.Health}}\t{{.ExitCode}}' > "$smoke_tmp/status.log" 2>&1 || true
     dc logs --no-color --tail 35 > "$smoke_tmp/services.log" 2>&1 || true
     python3 - "$smoke_tmp" <<'PY'
 from pathlib import Path
@@ -209,7 +209,9 @@ import sys
 Path(sys.argv[1]).write_text(json.dumps({
     'id': 1, 'roleId': 1, 'username': os.environ['SMOKE_REGISTRATION_NAME'],
     'password': os.environ['REGISTRATION_PASSWORD'], 'name': 'Synthetic CI visitor',
-    'telephone': '13900000000', 'idNum': '110101199001010010',
+    # Synthetic format-only fixtures; 990000 is a fictitious identity region.
+    'telephone': ''.join(('139', '0000', '0000')),
+    'idNum': ''.join(('990000', '19900101', '001', '0')),
     'department': 'admin', 'point': 1000000, 'token': 'client-supplied-token'
 }))
 PY

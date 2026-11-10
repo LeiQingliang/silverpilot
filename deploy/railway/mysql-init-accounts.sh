@@ -1,12 +1,39 @@
 #!/bin/sh
 # Sourced by the official MySQL entrypoint during FIRST initialization only.
 # Do not enable shell tracing: runtime variables contain bootstrap credentials.
+sp_caller_options=$-
 set -eu
 
 sp_fail() {
     echo "SilverPilot database bootstrap: $1" >&2
     exit 1
 }
+
+sp_sql() (
+    # The official entrypoint's _mysql_passfile intentionally reads an optional
+    # $1 without a default. Keep our checks strict, but run its helper with the
+    # upstream shell options in an isolated subshell; nounset would otherwise
+    # break password-file generation and cause an authentication failure.
+    set +u
+    sp_sql_error=$(mktemp /tmp/silverpilot-mysql-error.XXXXXX) || exit 1
+    trap 'rm -f "$sp_sql_error"' EXIT
+    if docker_process_sql "$@" 2>"$sp_sql_error"; then
+        exit 0
+    else
+        sp_sql_status=$?
+        # MySQL errors may contain SQL or secrets. Emit only numeric error
+        # code/SQLSTATE, never the raw message or failing statement.
+        sp_sql_diagnostic=$(sed -nE 's/^ERROR ([0-9]+) \(([A-Z0-9]{5})\).*/MySQL error \1 (SQLSTATE \2)/p' "$sp_sql_error" | head -n 1)
+        if [ -n "$sp_sql_diagnostic" ]; then
+            printf 'SilverPilot database bootstrap: %s; client exit %s.\n' "$sp_sql_diagnostic" "$sp_sql_status" >&2
+        elif grep -q 'unbound variable' "$sp_sql_error"; then
+            printf 'SilverPilot database bootstrap: SQL helper shell-variable error; client exit %s.\n' "$sp_sql_status" >&2
+        else
+            printf 'SilverPilot database bootstrap: SQL helper failed; client exit %s (details withheld).\n' "$sp_sql_status" >&2
+        fi
+        exit "$sp_sql_status"
+    fi
+)
 
 sp_validate_secret() {
     # Use 32-72 random base64url/hex characters; bcrypt has a 72-byte limit.
@@ -72,13 +99,13 @@ if [ "$sp_original_count" != 18 ] || [ "$sp_locked_count" != "$sp_original_count
     sp_fail 'Seed account format/count changed; review the sanitizer before deployment.'
 fi
 
-if ! docker_process_sql --database=a_old < "$sp_sanitized" >/dev/null 2>&1; then
+if ! sp_sql --database=a_old < "$sp_sanitized" >/dev/null; then
     rm -f "$sp_sanitized"
     sp_fail 'Synthetic database import failed. No completion marker was written.'
 fi
 rm -f "$sp_sanitized"
 
-sp_account_check=$(docker_process_sql --database=a_old --batch --skip-column-names <<'SQL'
+sp_account_check=$(sp_sql --database=a_old --batch --skip-column-names <<'SQL'
 SELECT CONCAT(COUNT(*), ':', SUM(`password` IS NULL), ':',
               SUM(`id` = 1 AND `username` = 'admin' AND `roleId` = 1), ':',
               SUM(`id` = 17 AND `username` = 'linge' AND `roleId` = 4))
@@ -87,7 +114,7 @@ SQL
 )
 [ "$sp_account_check" = '18:18:1:1' ] || sp_fail 'Unexpected seed identities or unlocked accounts.'
 
-if ! docker_process_sql --database=a_old >/dev/null 2>&1 <<SQL
+if ! sp_sql --database=a_old >/dev/null <<SQL
 START TRANSACTION;
 UPDATE \`user\` SET \`password\` = '$sp_admin_hash'
 WHERE \`id\` = 1 AND \`username\` = 'admin' AND \`roleId\` = 1;
@@ -99,7 +126,7 @@ then
     sp_fail 'Could not enable bootstrap accounts. No completion marker was written.'
 fi
 
-sp_enabled_count=$(docker_process_sql --database=a_old --batch --skip-column-names <<'SQL'
+sp_enabled_count=$(sp_sql --database=a_old --batch --skip-column-names <<'SQL'
 SELECT COUNT(*) FROM `user` WHERE `password` IS NOT NULL;
 SQL
 )
@@ -107,3 +134,9 @@ SQL
 touch /var/lib/mysql/.silverpilot-railway-initialized-v1
 unset sp_admin_hash sp_visitor_hash sp_htpasswd sp_hash_value
 echo 'SilverPilot synthetic database initialized; two bootstrap accounts enabled and all other seed accounts locked.'
+
+# This file is sourced. Preserve the official entrypoint's option state for
+# its subsequent root-account and temporary-server shutdown helpers as well.
+case "$sp_caller_options" in *u*) ;; *) set +u ;; esac
+case "$sp_caller_options" in *e*) ;; *) set +e ;; esac
+unset sp_caller_options
