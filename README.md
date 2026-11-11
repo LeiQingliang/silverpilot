@@ -7,6 +7,17 @@
     Not a scripted chatbot: the model plans, the application authorizes, and the user confirms.
   </p>
 </div>
+## 求职作品与项目证据
+
+围绕 **技术理解、商业化能力与 AI 工具使用**，按 AI 产品运营、AI 产品经理、客户经理／AI 销售三类岗位整理项目能力、可核查证据与待验证事项。
+
+| 阅读目标 | 材料 |
+| --- | --- |
+| 一分钟了解业务问题、产品决策和岗位对应能力 | [项目展示概览](portfolio/career-2026-11-11/SilverPilot-README求职展示补充.md) |
+| 使用简历条目、作品集摘要和面试回答，并查看证据来源 | [三岗位求职证据包](portfolio/career-2026-11-11/SilverPilot-三岗位求职证据包.md) |
+| 补充用户研究、试点验收、个人／团队／AI 贡献及短演示 | [验证与贡献记录模板](portfolio/career-2026-11-11/SilverPilot-验证与贡献记录模板.md) |
+
+材料核查于 **2026-11-11**。个人经历采用简历自述口径；学校项目期与后续仓库迭代分开说明。模板中的用户试用、商业收益与验收结果均待实际采集，不作为已取得成果。
 
 <p align="center">
   <a href=".github/workflows/ci.yml"><img alt="GitHub Actions CI workflow" src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=flat-square&amp;logo=githubactions&amp;logoColor=white" /></a>
