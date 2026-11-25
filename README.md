@@ -1,6 +1,6 @@
 # SilverPilot · 智慧养老业务 Agent 平台
 
-SilverPilot 帮助社区居民用日常语言找活动、约上门服务、订餐和查看本人的体检报告。以预约为例，居民告诉「小伴」需要什么，小伴查询服务目录并列出待确认信息，居民确认后由后端创建订单。社区管理员可以查看办理记录，追踪哪些请求需要改进。
+SilverPilot 是面向社区养老服务的开源应用。居民可以请「小伴」查活动、约上门服务、订餐或查看本人的体检报告。以预约为例，小伴从服务目录找出可选项目，居民核对日期和地址并确认后，后端才创建订单。管理员可在运营中心追踪办理结果和失败原因。
 
 **[观看完整演示（13 分 32 秒）](https://leiqingliang.github.io/silverpilot/)** · **[打开在线体验](https://silverpilot.up.railway.app/login)** · [演示账号](#在线体验) · [本地启动](#快速开始)
 
@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/65eecf9c-077e-4c51-855c-c71717d7780a
 | 居民如何找活动 | `linge` | `123456` | 打开「小伴生活助理」，点击「找活动」，在「办理过程」查看查询轨迹，再到「活动」页核对结果。 |
 | 管理员如何跟踪办理情况 | `admin` | `123456` | 打开「智能服务运营 → 小伴运营中心」，在「最近运行记录」查看状态、耗时和工具调用次数。 |
 
-两个公网账号均为只读。要体验**确认预约并生成订单**，请走下方本地流程。公网 AI 额度由同一演示账号的访客共享，遇到 `429` 可稍后再试。站点暂时不可用时，仍可观看录屏。
+两个公网账号均为只读，适合浏览和查询。若要确认预约并核对新订单，请按下方步骤在本地运行。公网 AI 额度由同一账号的访客共享，遇到 `429` 可稍后再试。
 
 ## 快速开始
 
@@ -49,14 +49,6 @@ cd silverpilot
 
 关闭启动窗口后服务继续在后台运行。在仓库根目录执行 `.\stop-project.cmd` 可正常停止，数据库、Redis 和上传文件的命名卷会保留。
 
-### 验证一笔上门服务预约
-
-在**本地 Docker 环境**配置真实文本模型后，用普通账号 `linge` 打开「小伴生活助理」。
-
-1. 输入「有哪些可以预约的上门服务？」。从返回的目录选一项，记下服务名称。
-2. 输入「帮我预约刚才的〈服务名称〉」，提供今天或之后的日期（`YYYY-MM-DD`）和虚构的服务地址。核对确认卡上的服务名称、日期和脱敏地址，此时动作处于 `PENDING`。
-3. 点击「确认并执行」。办理成功后点击右上角用户名，选择「服务订单」核对新订单。也可以对另一笔待确认预约点击「暂不执行」，此时订单列表应保持原样。
-
 ### 模型配置
 
 编辑首次启动生成的 `.env.docker`，保存后重新运行 `.\start-docker.cmd`。密钥仅放在本机被 Git 忽略的配置中。全部变量见[环境配置模板](.env.docker.example)。
@@ -73,6 +65,14 @@ cd silverpilot
 
 LongCat 文本适配器也有独立配置。真实账号联调进度、各模型支持的输入和错误处理见 [Provider 接入说明](docs/LLM_PROVIDER_INTEGRATION.md)。
 
+### 验证一笔上门服务预约
+
+在本地 Docker 环境启用真实文本模型后，用普通账号 `linge` 打开「小伴生活助理」。
+
+1. **查服务。** 输入「有哪些可以预约的上门服务？」从返回的目录选一项，记下服务名称。
+2. **核对预约。** 告诉小伴要预约哪项服务，提供今天或之后的日期（`YYYY-MM-DD`）和虚构地址。确认卡会显示服务名称、日期和脱敏地址。此时动作处于 `PENDING`。
+3. **查订单。** 点击「确认并执行」。办理成功后点击右上角用户名，选择「服务订单」，核对刚才的服务和日期。若想同时验证放弃预约，可另发一笔请求并点击「暂不执行」，再检查订单列表。
+
 ### 常见问题
 
 | 现象 | 处理 |
@@ -80,6 +80,7 @@ LongCat 文本适配器也有独立配置。真实账号联调进度、各模型
 | 启动时报端口冲突 | 默认宿主端口为前端 `8082`、后端 `8083`、MySQL `3307`、Redis `6380`。在 `.env.docker` 中调整冲突组件的端口，重新启动后使用新地址。 |
 | 页面或容器未就绪 | 在仓库根目录运行 `.\scripts\docker-dev.ps1 status`，再用 `.\scripts\docker-dev.ps1 logs` 查看对应服务的启动错误。 |
 | 能浏览业务，但小伴无法回答 | 查看工作台的模型状态，核对 `.env.docker` 中的密钥和模型 ID，重启 Docker 栈。只想验证只读工具时可启用 Mock。 |
+| 活动查询正常，知识问答却找不到来源 | 活动来自数据库，知识问答检索已审核且在有效期内的文档。检查知识条目的 `status` 和 `next_review_at`。如已过期，按[知识治理流程](knowledge-base/README.md)复核后再运行知识引用用例。 |
 
 卷管理、数据库初始化和分模式排障见[部署说明](docs/DEPLOYMENT.md)。公网部署的只读账号、访问限制和模型预算见 [Railway 部署指南](deploy/railway/README.md)。
 
@@ -134,17 +135,45 @@ Vue 工作台收集需求并展示工具结果。Spring Boot 根据登录身份�
 
 2026-08-20 的 DeepSeek 记录中，16 项工程契约全部通过。其中写操作用例检查待确认状态后取消。要验证确认后的订单，请按[上门服务预约步骤](#验证一笔上门服务预约)操作。[原始评测报告](docs/agent-evaluation-live.json) · [整栈验证记录](docs/VALIDATION_REPORT.md) · [后续 AI 运营扩展验证](docs/AI_OPERATIONS_VALIDATION.md)
 
-## 文档与项目资料
+## 维护与发布
 
 | 阅读目的 | 入口 |
 | --- | --- |
 | 维护知识、接入外部助手 | [知识审核与有效期](knowledge-base/README.md) · [WorkBuddy / ima 接入](docs/WORKBUDDY_IMA_QUICKSTART.md) · [CatPaw / LongCat 实践](catpaw/README.md) |
 | 复盘运营问题 | [指标口径、问题登记与复测](docs/AI_OPERATIONS_WORKFLOW.md) |
 | 部署、加固与发布 | [Railway 入口规则](deploy/railway/EDGE_PROTECTION.md) · [安全设计](docs/SECURITY.md) · [发布与回滚](docs/RELEASE_PROCESS.md) · [变更记录](CHANGELOG.md) |
-| 阅读毕业设计与答辩材料 | [论文 PDF（56 页）](docs/thesis/silverpilot-thesis.pdf) · [可编辑 Word](docs/thesis/silverpilot-thesis.docx?raw=true) · [答辩幻灯片（5 页）](docs/thesis/silverpilot-defense.pptx?raw=true) · [论文对应源码](https://github.com/LeiQingliang/silverpilot/tree/768674c3f86eaae16983a35b60bae71fee8e2faa) |
-| 查看求职作品与贡献记录 | [项目展示概览](portfolio/career-2026-11-11/SilverPilot-README求职展示补充.md) · [岗位证据包](portfolio/career-2026-11-11/SilverPilot-三岗位求职证据包.md) · [验证与贡献记录模板](portfolio/career-2026-11-11/SilverPilot-验证与贡献记录模板.md) |
 | 下载演示原片 | [高清 MP4（约 296 MB）](https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4) · [视频归档与校验文件](https://github.com/LeiQingliang/silverpilot/releases/tag/demo-video-2026-11-04) |
 
 代码与文档贡献请参阅[贡献指南](CONTRIBUTING.md)和[行为准则](CODE_OF_CONDUCT.md)。使用问题见[支持渠道](SUPPORT.md)，安全问题请通过[私密报告渠道](SECURITY.md)提交。
+
+## 软件工程毕业设计论文
+
+**《面向社区养老服务的可验证 AI Agent 平台设计与实现》** 以上门服务预约为例，说明如何从服务目录查询、居民确认一直追踪到最终订单。论文记录了作者使用多种 AI 编程工具独立开发 SilverPilot 的实践，也收录了项目运行截图和社区服务站试点方案。
+
+PDF 与可编辑 Word 为同一版定稿，共 56 页。[阅读 PDF 定稿](docs/thesis/silverpilot-thesis.pdf) · [下载可编辑 Word 定稿](docs/thesis/silverpilot-thesis.docx?raw=true) · [查看论文对应源码快照 `768674c3`](https://github.com/LeiQingliang/silverpilot/tree/768674c3f86eaae16983a35b60bae71fee8e2faa)
+
+| 如果要核对 | 建议阅读 |
+| --- | --- |
+| 工程测了什么，知识检索如何比较 | 第 7 章。28 题检索对照实验比较知识来源的排序和无匹配时的返回结果。 |
+| 如何复现部署、接口联调与验收 | 第 8 章和附录 C。 |
+| 如何从原始数据复算实验结果 | 附录 E，内含原始数据及复算脚本。 |
+
+### 项目答辩 PPT
+
+《SilverPilot 智慧养老业务 Agent 平台》用 5 页回答「上门服务预约什么时候才算下单」，随后展示业务工具与后端校验、养老知识引用和照护建议校验。最后一页列出已完成的工程验证，以及仍需到社区服务站试点测量的办理效率。[下载答辩幻灯片（PPTX，5 页）](docs/thesis/silverpilot-defense.pptx?raw=true)
+
+## 求职作品与项目证据
+
+以下材料面向 **AI 产品运营、AI 产品经理、客户经理／AI 销售** 三类岗位，围绕产品决策、技术理解、商业化方案和 AI 工具使用组织证据。
+
+| 阅读目标 | 材料 |
+| --- | --- |
+| 快速了解业务问题、关键产品决策和岗位对应能力 | [项目展示概览](portfolio/career-2026-11-11/SilverPilot-README求职展示补充.md) |
+| 按岗位查看简历条目、作品集摘要、面试问答及对应出处 | [三岗位求职证据包](portfolio/career-2026-11-11/SilverPilot-三岗位求职证据包.md) |
+| 记录用户研究、试点验收、个人／团队／AI 分工，或准备三分钟演示 | [验证与贡献记录模板](portfolio/career-2026-11-11/SilverPilot-验证与贡献记录模板.md) |
+
+材料核查于 **2026-11-11**。学校项目期（2026 年 1 月至 8 月）的个人职责按简历自述，11 月的仓库迭代单独记录。模板中的用户试用、机构试点及业务收益均待实际验证。
+
+## 许可证与引用
 
 本项目采用 [Apache License 2.0](LICENSE)。引用项目时可使用仓库的[引用元数据](CITATION.cff)。
