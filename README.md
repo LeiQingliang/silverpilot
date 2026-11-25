@@ -1,37 +1,63 @@
-# SilverPilot · 智慧养老业务 Agent 平台
+# SilverPilot
 
-SilverPilot 是面向社区养老服务的开源应用。居民可以请「小伴」查活动、约上门服务、订餐或查看本人的体检报告。以预约为例，小伴从服务目录找出可选项目，居民核对日期和地址并确认后，后端才创建订单。管理员可在运营中心追踪办理结果和失败原因。
+[![持续集成 · main](https://github.com/LeiQingliang/silverpilot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/LeiQingliang/silverpilot/actions/workflows/ci.yml)
+[![CodeQL · main](https://github.com/LeiQingliang/silverpilot/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/LeiQingliang/silverpilot/actions/workflows/codeql.yml)
+[![许可证 · Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-8054A1?style=flat-square)](LICENSE)
+[![MCP · 6 个只读工具](https://img.shields.io/badge/MCP-6%20read--only%20tools-176C72?style=flat-square)](workbuddy/README.md)
 
-**[观看完整演示（13 分 32 秒）](https://leiqingliang.github.io/silverpilot/)** · **[打开在线体验](https://silverpilot.up.railway.app/login)** · [演示账号](#在线体验) · [本地启动](#快速开始)
+[![Java 25 LTS](https://img.shields.io/badge/Java-25%20LTS-B45309?style=flat-square&logo=openjdk&logoColor=white)](runtime-versions.json)
+[![Spring Boot 4.1](https://img.shields.io/badge/Spring%20Boot-4.1-4D7C0F?style=flat-square&logo=springboot&logoColor=white)](SourceCode/cecsmsServe-springboot/pom.xml)
+[![Vue 3.5](https://img.shields.io/badge/Vue-3.5-087F5B?style=flat-square&logo=vuedotjs&logoColor=white)](SourceCode/cecsmsui-vue/package.json)
+[![Vite 8](https://img.shields.io/badge/Vite-8-6D3BC1?style=flat-square&logo=vite&logoColor=white)](SourceCode/cecsmsui-vue/package.json)
+[![MySQL 9.7](https://img.shields.io/badge/MySQL-9.7-00618A?style=flat-square&logo=mysql&logoColor=white)](database/README.md)
+[![Redis 8.2](https://img.shields.io/badge/Redis-8.2-B42318?style=flat-square&logo=redis&logoColor=white)](redis/README.md)
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose-0969AB?style=flat-square&logo=docker&logoColor=white)](compose.yaml)
+
+**SilverPilot 是面向社区养老服务的开源业务 Agent 平台。** 居民可以用自然语言查活动、预约上门服务、订餐和查看本人的体检报告。模型通过业务工具查询目录、拟定办理请求，Spring Boot 校验身份、参数和业务规则。涉及报名、预约或取消的操作，须由居民确认后执行。管理员可以追踪每次运行及其办理结果。
+
+**[观看演示（13 分 32 秒）](https://leiqingliang.github.io/silverpilot/)** · [在线体验与账号](#在线体验) · [本地启动](#快速开始) · [系统架构](#系统架构) · [开发与验证](#开发与验证)
 
 <p align="center">
-  <a href="docs/screenshots/agent-workspace-20260821-0202.png"><img src="docs/screenshots/agent-workspace-20260821-0202.png" width="800" alt="居民端小伴工作台，提供找活动、找服务、安排膳食和看报告四个入口，右侧显示办理进度" /></a>
+  <a href="docs/screenshots/agent-workspace-20260821-0202.png"><img src="docs/screenshots/agent-workspace-20260821-0202.png" width="800" alt="居民端小伴工作台。左侧可查询活动、上门服务、膳食和体检报告，右侧显示办理进度。" /></a>
 </p>
 
 ## 演示视频
 
 https://github.com/user-attachments/assets/65eecf9c-077e-4c51-855c-c71717d7780a
 
-**跳到操作画面**　[04:13 查询活动](https://leiqingliang.github.io/silverpilot/media/silverpilot-demo.mp4#t=253) · [06:35 查看照护建议](https://leiqingliang.github.io/silverpilot/media/silverpilot-demo.mp4#t=395) · [07:25 核对服务订单](https://leiqingliang.github.io/silverpilot/media/silverpilot-demo.mp4#t=445) · [11:25 查看模型与知识来源](https://leiqingliang.github.io/silverpilot/media/silverpilot-demo.mp4#t=685)
+[04:13 查询活动](https://leiqingliang.github.io/silverpilot/media/silverpilot-demo.mp4#t=253) · [06:35 查看照护建议](https://leiqingliang.github.io/silverpilot/media/silverpilot-demo.mp4#t=395) · [07:25 核对服务订单](https://leiqingliang.github.io/silverpilot/media/silverpilot-demo.mp4#t=445) · [11:25 检查模型与知识来源](https://leiqingliang.github.io/silverpilot/media/silverpilot-demo.mp4#t=685)
 
-上方播放器为流畅版。高清播放页提供 2560 × 1528 原画，默认使用浏览器支持的最高倍速，可切回 1× 观看操作细节。[高清与倍速播放](https://leiqingliang.github.io/silverpilot/)
+GitHub 内嵌播放器提供流畅版。需要看清字段或确认卡时，可打开 2560 × 1528 原画，将默认的最高可用倍速切回 1×。[高清与倍速播放](https://leiqingliang.github.io/silverpilot/)
+
+## 界面快照
+
+<details>
+<summary>查看管理端运行记录、运营总览和手机端服务订单</summary>
+
+| 小伴运营中心 | 运营数据总览 |
+| --- | --- |
+| [![管理端模型配置与运行统计](docs/screenshots/agent-operations-20260821-0202.png)](docs/screenshots/agent-operations-20260821-0202.png) | [![管理端服务评分与业务趋势](docs/screenshots/operations-dashboard-20260821-0202.png)](docs/screenshots/operations-dashboard-20260821-0202.png) |
+
+| 手机端服务目录 | 手机端服务订单 |
+| --- | --- |
+| [![手机端养老服务目录](docs/screenshots/mobile-services-20260821-0202.png)](docs/screenshots/mobile-services-20260821-0202.png) | [![手机端服务订单和状态筛选](docs/screenshots/mobile-service-orders-20260821-0202.png)](docs/screenshots/mobile-service-orders-20260821-0202.png) |
+
+截图取自 2026-08-21 的本地 Docker 演示环境，使用合成数据。[全部原图](docs/screenshots/)
+
+</details>
 
 ## 在线体验
 
-打开登录页，输入共享账号、密码和页面验证码。演示使用合成数据，请用虚构的示例信息体验。[公网登录](https://silverpilot.up.railway.app/login)
+使用下列共享账号和登录页验证码即可体验。**公网共享账号均为只读**，体验时请使用虚构信息。[打开在线应用](https://silverpilot.up.railway.app/login)
 
-| 想体验什么 | 用户名 | 密码 | 登录后从哪里开始 |
-| --- | --- | --- | --- |
-| 居民如何找活动 | `linge` | `123456` | 打开「小伴生活助理」，点击「找活动」，在「办理过程」查看查询轨迹，再到「活动」页核对结果。 |
-| 管理员如何跟踪办理情况 | `admin` | `123456` | 打开「智能服务运营 → 小伴运营中心」，在「最近运行记录」查看状态、耗时和工具调用次数。 |
+- **居民**　用户名 `linge`，密码 `123456`。进入「小伴生活助理」点击「找活动」，在「办理过程」查看查询轨迹，再到「活动」页核对结果。
+- **管理员**　用户名 `admin`，密码 `123456`。进入「智能服务运营 → 小伴运营中心」，在「最近运行记录」查看状态、耗时和工具调用次数。
 
-两个公网账号均为只读，适合浏览和查询。若要确认预约并核对新订单，请按下方步骤在本地运行。公网 AI 额度由同一账号的访客共享，遇到 `429` 可稍后再试。
+公网 AI 配额在访客之间共享。遇到 `429` 时可稍后重试。要验证确认写入和订单结果，请使用本地环境。
 
 ## 快速开始
 
-### Windows 一键启动
-
-准备 Git、Windows PowerShell 5.1 或 PowerShell 7，并启动带 Compose 的 Docker Desktop。该模式在容器中运行前端、后端、MySQL 和 Redis。首次构建需要联网获取镜像和依赖。
+以下命令在 **Windows PowerShell 5.1 或 PowerShell 7** 中执行。准备 Git，并启动带 Compose 的 Docker Desktop。全容器模式使用镜像内的 Java、Node.js、MySQL 和 Redis，首次构建需要联网。
 
 ```powershell
 git clone https://github.com/LeiQingliang/silverpilot.git
@@ -39,112 +65,111 @@ cd silverpilot
 .\start-docker.cmd
 ```
 
-启动器会生成本地配置 `.env.docker`。浏览器打开登录页后，用上表账号登录。没有模型密钥也可以浏览活动、服务和订单。要让小伴调用真实模型，请先完成[模型配置](#模型配置)。
+当控制台出现 `[READY]`，打开其输出的登录地址，默认是 [127.0.0.1:8082/login](http://127.0.0.1:8082/login)。新建数据库卷可用上面的居民账号登录。启动器会生成包含本机凭据的 `.env.docker`。已有数据卷沿用已有账号和密码。
 
-| 检查项 | 默认地址或命令 | 预期结果 |
-| --- | --- | --- |
-| 打开应用 | <http://127.0.0.1:8082/login> | 显示登录页和验证码 |
-| 检查后端 | <http://127.0.0.1:8083/actuator/health> | JSON 中的 `status` 为 `UP` |
-| 检查容器 | `.\scripts\docker-dev.ps1 status` | MySQL、Redis、后端、前端均为 `healthy` |
+**确认前后端连通。** 下列两个请求经过同一个前端端口，分别检查 Nginx 和它代理的 Spring Boot 服务。若修改过前端端口，请替换 `8082`。
 
-关闭启动窗口后服务继续在后台运行。在仓库根目录执行 `.\stop-project.cmd` 可正常停止，数据库、Redis 和上传文件的命名卷会保留。
+```powershell
+$app = 'http://127.0.0.1:8082'
+(Invoke-RestMethod "$app/healthz").Trim()           # ok
+(Invoke-RestMethod "$app/api/actuator/health").status  # UP
+```
+
+关闭启动窗口后，容器继续在后台运行。要停止项目并保留数据库、Redis 和上传文件的命名卷，在仓库根目录执行 `.\stop-project.cmd`。
 
 ### 模型配置
 
-编辑首次启动生成的 `.env.docker`，保存后重新运行 `.\start-docker.cmd`。密钥仅放在本机被 Git 忽略的配置中。全部变量见[环境配置模板](.env.docker.example)。
+选择与你要验证的功能对应的配置。编辑本机 `.env.docker` 后，重新运行 `.\start-docker.cmd` 载入更改。[环境变量模板](.env.docker.example) · [模型与多模态接入说明](docs/LLM_PROVIDER_INTEGRATION.md)
 
-| 需要的能力 | 要配置的内容 |
-| --- | --- |
-| 文本问答与真实业务工具 | 填写 `SILVERPILOT_DEEPSEEK_API_KEY`，并将 `SILVERPILOT_DEEPSEEK_MODEL` 设为账号可用的模型 ID。 |
-| 图片理解 | 为豆包配置 `SILVERPILOT_DOUBAO_API_KEY` 和 `SILVERPILOT_DOUBAO_MODEL`（模型或推理接入点 ID）。 |
-| 无密钥测试只读工具 | 显式设置 `SILVERPILOT_AI_MOCK_ENABLED=true`，按下方命令运行 6 条只读契约。 |
-
-```powershell
-.\scripts\run-agent-evaluation.ps1 -Provider mock -MaxCases 6 -EnvFile .\.env.docker
-```
-
-LongCat 文本适配器也有独立配置。真实账号联调进度、各模型支持的输入和错误处理见 [Provider 接入说明](docs/LLM_PROVIDER_INTEGRATION.md)。
+- **浏览业务页面**可以直接使用初始配置，查询活动、服务和订单均无需模型密钥。
+- **验证只读工具**时设置 `SILVERPILOT_AI_MOCK_ENABLED=true`，然后运行[只读契约评测](#agent-契约评测)，检查工具调用和知识引用。
+- **体验真实对话与预约**时填写 `SILVERPILOT_DEEPSEEK_API_KEY`，将 `SILVERPILOT_DEEPSEEK_MODEL` 设为账号可用的模型 ID。豆包图片理解需要单独设置 `SILVERPILOT_DOUBAO_API_KEY` 和 `SILVERPILOT_DOUBAO_MODEL`。LongCat 文本适配的配置及联调记录见接入说明。
 
 ### 验证一笔上门服务预约
 
-在本地 Docker 环境启用真实文本模型后，用普通账号 `linge` 打开「小伴生活助理」。
+在本地使用真实文本模型和居民账号 `linge`。先查看「服务订单」，以便对照操作前后的记录。
 
-1. **查服务。** 输入「有哪些可以预约的上门服务？」从返回的目录选一项，记下服务名称。
-2. **核对预约。** 告诉小伴要预约哪项服务，提供今天或之后的日期（`YYYY-MM-DD`）和虚构地址，例如「演示小区三号楼」。在确认卡上核对服务名称、日期和地址摘要。此时动作处于 `PENDING`。
-3. **查订单。** 点击「确认并执行」。办理成功后点击右上角用户名，选择「服务订单」，核对刚才的服务和日期。若想同时验证放弃预约，可另发一笔请求并点击「暂不执行」，再检查订单列表。
+1. **查目录。** 在「小伴生活助理」输入「有哪些可以预约的上门服务？」，从实际返回的目录选择一项服务。
+2. **核对计划。** 提供今天或之后的日期（`YYYY-MM-DD`）和虚构地址，例如「演示小区三号楼」。确认卡列出服务、日期和地址摘要。此时动作状态为 `PENDING`。
+3. **核对结果。** 点击「确认并执行」。成功后点击右上角用户名，进入「服务订单」核对新增记录。另发一笔请求并选择「暂不执行」，可验证放弃待确认预约时没有新增订单。
 
-### 常见问题
+## 系统架构
 
-| 现象 | 处理 |
+浏览器统一请求同源 `/api`。在 Docker 模式下由 Nginx 转发，在 IDE 开发模式下由 Vite 转发。两者都会去掉 `/api` 前缀，例如浏览器发送的 `POST /api/chat` 对应后端 `POST /chat`。
+
+| 组件 | 职责与数据边界 |
 | --- | --- |
-| 启动时报端口冲突 | 默认宿主端口为前端 `8082`、后端 `8083`、MySQL `3307`、Redis `6380`。在 `.env.docker` 中调整冲突组件的端口，重新启动后使用新地址。 |
-| 页面或容器未就绪 | 在仓库根目录运行 `.\scripts\docker-dev.ps1 status`，再用 `.\scripts\docker-dev.ps1 logs` 查看对应服务的启动错误。 |
-| 能浏览业务，但小伴无法回答 | 查看工作台的模型状态，核对 `.env.docker` 中的密钥和模型 ID，重启 Docker 栈。只想验证只读工具时可启用 Mock。 |
-| 活动查询正常，知识问答却找不到来源 | 活动来自数据库，知识问答检索已审核且在有效期内的文档。检查知识条目的 `status` 和 `next_review_at`。如已过期，按[知识治理流程](knowledge-base/README.md)复核后再运行知识引用用例。 |
+| Vue 工作台 | 发送登录用户的请求，展示回复、工具轨迹、来源引用和确认卡。[前端模块](SourceCode/cecsmsui-vue/) |
+| Spring Boot / MyBatis-Plus | 从登录 JWT 识别用户，校验角色、资源归属和业务参数。Web Agent 有 8 个只读工具、5 个待确认写工具。[工具定义](SourceCode/cecsmsServe-springboot/src/main/java/com/cecsmsserve/util/Tools.java) |
+| MySQL / Redis | MySQL 保存目录、订单、运行及动作记录。Redis 用于验证码、共享限流及 AI 配额。[数据与端口配置](compose.yaml) |
+| 知识库 | 对已审核、处于复核有效期内的 Markdown 按词项检索，返回 `[KB:来源]`。照护建议校验可用服务 ID，供服务导航和就医沟通参考。[知识治理](knowledge-base/README.md) |
+| WorkBuddy MCP | 使用独立密钥提供 6 个非个人只读工具，用于查目录、检索已审核知识和读取匿名聚合指标。[接入指南](docs/WORKBUDDY_IMA_QUICKSTART.md) |
 
-卷管理、数据库初始化和分模式排障见[部署说明](docs/DEPLOYMENT.md)。公网部署的只读账号、访问限制和模型预算见 [Railway 部署指南](deploy/railway/README.md)。
+### Agent 如何办理业务
 
-## Agent 如何办理业务
+运行状态描述一次对话的处理进度，动作状态描述一次具体写操作。以预约为例，可在登录后打开浏览器开发者工具的「网络」面板，按顺序核对以下请求。路径均以浏览器侧为准。
 
-Vue 工作台收集需求并展示工具结果。Spring Boot 根据登录身份读取 MySQL、检查数据归属和业务条件，模型通过后端提供的工具参与办理。
+1. `GET /api/chat/status` 返回模型配置状态和 `knowledge.ready`。从工作台判断模型、知识源是否可用时，先看这个响应。
+2. `POST /api/chat` 返回 `reply`、`trace` 和 `run`。准备好写操作时，`run.status` 为 `WAITING_CONFIRMATION`，`pendingAction.status` 为 `PENDING`，此时尚未生成订单。
+3. 居民确认后，前端向 `/api/chat/actions/{token}/confirm` 发送 POST。后端校验本人身份、令牌、有效期和动作状态。核对响应中的 `success` 和 `action.status`，成功终态为 `SUCCEEDED`。即使 HTTP 返回 200，仍应读取业务结果。
+4. 如果确认后网络中断，先用 `GET /api/chat/actions?limit=10` 查看本人动作记录，再核对服务订单。同一确认令牌已成功时，重复确认会返回已有结果。放弃待确认动作使用 `POST /api/chat/actions/{token}/cancel`，取消已有订单则是另一项需要确认的业务操作。
 
-| 能力 | 具体行为 |
-| --- | --- |
-| 查询业务 | 8 个只读工具覆盖活动、服务目录、本人订单、体检报告、菜谱及养老知识。个人数据按当前登录用户读取。 |
-| 执行写操作 | 活动报名、预约或取消服务、预订或取消助餐共 5 类。工具先创建待确认动作，后端校验确认人、有效期和动作状态，业务执行成功后才返回办理结果。 |
-| 引用知识 | 从审核通过且在复核有效期内的 Markdown 检索词项，回答中可查看 `[KB:…]` 来源。照护建议还会核对可选服务 ID，用于服务导航和就医沟通准备。 |
-| 跟踪问题 | 管理员可查看运行状态、工具调用次数、动作结果与耗时，登记失败案例，关联修复记录并复测。 |
-| 对接外部助手 | WorkBuddy MCP 提供 6 个非个人、只读工具，用于查询目录、审核知识和匿名聚合指标。 |
-
-读写时序、工具权限和知识检索设计见[系统架构](docs/ARCHITECTURE.md)与 [AI Harness](docs/AI_HARNESS.md)。健康相关功能仅供信息整理与服务导航，临床判断由专业人员负责。
-
-## 界面快照
-
-| 管理端 · 小伴运行 | 管理端 · 运营数据总览 |
-| --- | --- |
-| [![小伴运行页面中的模型、知识和运行统计](docs/screenshots/agent-operations-20260821-0202.png)](docs/screenshots/agent-operations-20260821-0202.png) | [![运营总览中的服务评分和业务趋势](docs/screenshots/operations-dashboard-20260821-0202.png)](docs/screenshots/operations-dashboard-20260821-0202.png) |
-
-<details>
-<summary>查看手机端服务目录与订单</summary>
-
-| 居民端 · 服务目录 | 居民端 · 服务订单 |
-| --- | --- |
-| [![手机端的养老服务目录](docs/screenshots/mobile-services-20260821-0202.png)](docs/screenshots/mobile-services-20260821-0202.png) | [![手机端的服务订单和状态筛选](docs/screenshots/mobile-service-orders-20260821-0202.png)](docs/screenshots/mobile-service-orders-20260821-0202.png) |
-
-</details>
-
-截图采自 2026-08-21 的本地 Docker 演示环境。社区首页、登录页及原尺寸截图见[截图目录](docs/screenshots/)。
+完整读写时序、运行审计及模型路由见[系统架构设计](docs/ARCHITECTURE.md)与 [AI Harness](docs/AI_HARNESS.md)。
 
 ## 开发与验证
 
-后端使用 Java 25、Spring Boot 4 和 MyBatis-Plus，前端使用 Vue 3 和 Vite，数据层使用 MySQL 和 Redis。精确版本见[运行时版本清单](runtime-versions.json)。
-
 ### 严格 IDEA + VSCode 本地开发
 
-1. 准备本机 MySQL（`127.0.0.1:3306`）并初始化 `a_old`，设置 `CECSMS_LOCAL_DB_PASSWORD` 或 `CECSMS_DB_PASSWORD`。在仓库根目录执行 `.\start-local.cmd`，由脚本准备 Docker Redis 和配置。[数据库初始化](database/README.md)
-2. 用 IntelliJ IDEA 打开 `SourceCode/cecsmsServe-springboot`，选择 JDK 25，运行 `com.cecsmsserve.CecsmsServeApplication`。先检查后端健康接口返回 `UP`。[后端开发指南](SourceCode/cecsmsServe-springboot/README.md)
-3. 用 VSCode 打开 `SourceCode/cecsmsui-vue`，按版本清单准备 Node.js 24 和 npm 12。在该目录依次运行 `npm ci`、`npm run dev`，访问 <http://127.0.0.1:8081/login>。[前端开发指南](SourceCode/cecsmsui-vue/README.md)
+需要断点调试时，后端和前端分别由 IDEA、VSCode 启动，默认前端端口为 `8081`。切换到该模式会停止并移除本项目全容器模式下的前端、后端和 MySQL 容器，命名卷保留。[运行模式与切换](docs/DEPLOYMENT.md)
+
+1. 准备本机 MySQL（`127.0.0.1:3306`），用种子 SQL 初始化 `a_old`，设置 `CECSMS_LOCAL_DB_PASSWORD` 或 `CECSMS_DB_PASSWORD`。在仓库根目录执行 `.\start-local.cmd` 准备 Docker Redis 和本机配置。[数据库初始化](database/README.md)
+2. 用 IDEA 打开 `SourceCode/cecsmsServe-springboot`，选择 JDK 25，启动 `com.cecsmsserve.CecsmsServeApplication`。[后端开发指南](SourceCode/cecsmsServe-springboot/README.md)
+3. 确认后端健康接口返回 `UP` 后，用 VSCode 打开 `SourceCode/cecsmsui-vue`，执行 `npm ci` 和 `npm run dev`，访问[本地开发登录页](http://127.0.0.1:8081/login)。[前端开发指南](SourceCode/cecsmsui-vue/README.md)
 
 ### 复现检查
 
-| 想验证什么 | 从哪里开始 |
-| --- | --- |
-| 本地 Docker 是否完整可用 | 启动后从仓库根目录运行 `.\scripts\verify-running-stack.ps1`，检查服务健康、前端代理和媒体资源。 |
-| 后端、前端与知识库是否通过工程检查 | 准备 JDK、Node.js、npm、Python，并在前端目录执行 `npm ci`。回到仓库根目录运行 `.\scripts\verify-project.ps1`。 |
-| 真实 Agent 的工具选择、权限与确认行为 | 配置 DeepSeek 并启动本地栈后，运行 `.\scripts\run-agent-evaluation.ps1 -Provider deepseek -MaxCases 0 -EnvFile .\.env.docker`。完整集含 16 例，会使用模型额度。[评测集与判定规则](evaluation/README.md) |
+- **已启动的 Docker 栈。** 在仓库根目录运行 `.\scripts\verify-running-stack.ps1`。它读取本机环境配置，检查四个服务的健康状态、同源代理和媒体资源，全部通过时输出 `[PASS] SilverPilot runtime verification completed successfully`。
+- **提交前工程检查。** 在完整 Git 工作目录中准备 JDK 25、Node.js 24、npm 12 和 Python 3.12，与 CI 对齐的精确版本见[运行时清单](runtime-versions.json)和 [CI 工作流](.github/workflows/ci.yml)。从仓库根目录执行：
 
-2026-08-20 的 DeepSeek 记录中，16 项工程契约全部通过。其中写操作用例检查待确认状态后取消。要验证确认后的订单，请按[上门服务预约步骤](#验证一笔上门服务预约)操作。[原始评测报告](docs/agent-evaluation-live.json) · [整栈验证记录](docs/VALIDATION_REPORT.md) · [后续 AI 运营扩展验证](docs/AI_OPERATIONS_VALIDATION.md)
+```powershell
+Push-Location .\SourceCode\cecsmsui-vue
+npm ci
+Pop-Location
+.\scripts\verify-publication-safety.ps1
+.\scripts\verify-project.ps1
+```
+
+### Agent 契约评测
+
+先启动本地 Docker 栈，按[模型配置](#模型配置)选择相应模式，再从仓库根目录执行所需的一条命令。
+
+```powershell
+# 显式 Mock：前 6 条只读用例，无需付费模型
+.\scripts\run-agent-evaluation.ps1 -Provider mock -MaxCases 6 -EnvFile .\.env.docker
+
+# DeepSeek：全部 16 条工程契约，使用真实模型额度
+.\scripts\run-agent-evaluation.ps1 -Provider deepseek -MaxCases 0 -EnvFile .\.env.docker
+```
+
+评测脚本默认直连后端 `127.0.0.1:8083`。例如后端改用 `18083` 时，在命令末尾追加 `-BaseUrl http://127.0.0.1:18083`。需要保存 JSON 报告可加 `-ReportPath .\.qa-artifacts\agent-eval.json`。
+
+2026-08-20 的 DeepSeek 历史报告为 **16/16**。用例覆盖工具选择、来源引用、待确认状态和预期拒绝。写操作用例创建待确认动作后取消，确认后的订单另按[预约验收步骤](#验证一笔上门服务预约)核对。[评测集与判定规则](evaluation/README.md) · [原始 JSON 报告](docs/agent-evaluation-live.json) · [整栈验证](docs/VALIDATION_REPORT.md)
+
+### 常见问题
+
+- **启动时报端口占用。** 默认宿主端口为前端 `8082`、后端 `8083`、MySQL `3307`、Redis `6380`，均绑定回环地址。调整 `.env.docker` 对应的 `SILVERPILOT_*_PORT` 后重启。
+- **登录页可打开，但业务请求失败。** 先检查前端端口的 `/api/actuator/health`。再运行 `.\scripts\docker-dev.ps1 status` 定位未就绪服务，用 `.\scripts\docker-dev.ps1 logs` 查看启动错误。
+- **活动查询正常，但助手没有模型或知识来源。** 从 `/api/chat/status` 分别核对 `providers` 和 `knowledge`。更改密钥或模型 ID 后重启。知识源缺失时，检查文档的 `status`、`reviewed_at` 和 `next_review_at`。[知识复核流程](knowledge-base/README.md)
 
 ## 维护与发布
 
-| 阅读目的 | 入口 |
+| 任务 | 工程入口 |
 | --- | --- |
-| 维护知识、接入外部助手 | [知识审核与有效期](knowledge-base/README.md) · [WorkBuddy / ima 接入](docs/WORKBUDDY_IMA_QUICKSTART.md) · [CatPaw / LongCat 实践](catpaw/README.md) |
-| 复盘运营问题 | [指标口径、问题登记与复测](docs/AI_OPERATIONS_WORKFLOW.md) |
-| 部署、加固与发布 | [Railway 入口规则](deploy/railway/EDGE_PROTECTION.md) · [安全设计](docs/SECURITY.md) · [发布与回滚](docs/RELEASE_PROCESS.md) · [变更记录](CHANGELOG.md) |
-| 下载演示原片 | [高清 MP4（约 296 MB）](https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4) · [视频归档与校验文件](https://github.com/LeiQingliang/silverpilot/releases/tag/demo-video-2026-11-04) |
-
-代码与文档贡献请参阅[贡献指南](CONTRIBUTING.md)和[行为准则](CODE_OF_CONDUCT.md)。使用问题见[支持渠道](SUPPORT.md)，安全问题请通过[私密报告渠道](SECURITY.md)提交。
+| 部署与排障 | [本地部署](docs/DEPLOYMENT.md) · [Railway 部署](deploy/railway/README.md) · [公网入口与配额](deploy/railway/EDGE_PROTECTION.md) |
+| 修改模型、知识或运营流程 | [Provider 接入](docs/LLM_PROVIDER_INTEGRATION.md) · [运营指标与复测](docs/AI_OPERATIONS_WORKFLOW.md) · [AI 运营扩展验证](docs/AI_OPERATIONS_VALIDATION.md) · [CatPaw / LongCat](catpaw/README.md) |
+| 准备贡献或发布 | [贡献指南](CONTRIBUTING.md) · [行为准则](CODE_OF_CONDUCT.md) · [版本策略](docs/VERSION_POLICY.md) · [发布与回滚](docs/RELEASE_PROCESS.md) · [变更记录](CHANGELOG.md) |
+| 获取支持或报告漏洞 | [使用支持](SUPPORT.md) · [安全策略](SECURITY.md) · [私密报告漏洞](https://github.com/LeiQingliang/silverpilot/security/advisories/new) |
+| 下载演示素材 | [高清 MP4（约 296 MB）](https://github.com/LeiQingliang/silverpilot/releases/download/demo-video-2026-11-04/silverpilot-demo-original.mp4) · [归档与校验文件](https://github.com/LeiQingliang/silverpilot/releases/tag/demo-video-2026-11-04) |
 
 ## 软件工程毕业设计论文
 
