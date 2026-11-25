@@ -13,7 +13,7 @@
 [![Redis 8.2](https://img.shields.io/badge/Redis-8.2-B42318?style=flat-square&logo=redis&logoColor=white)](redis/README.md)
 [![Docker Compose](https://img.shields.io/badge/Docker-Compose-0969AB?style=flat-square&logo=docker&logoColor=white)](compose.yaml)
 
-**SilverPilot 是面向社区养老服务的开源业务 Agent 平台。** 居民可以用自然语言查活动、预约上门服务、订餐和查看本人的体检报告。模型通过业务工具查询目录、拟定办理请求，Spring Boot 校验身份、参数和业务规则。涉及报名、预约或取消的操作，须由居民确认后执行。管理员可以追踪每次运行及其办理结果。
+**SilverPilot 是面向社区养老服务的开源业务 Agent 平台。** 居民可以用自然语言查活动、约上门服务、订餐和看本人的体检报告。模型调用业务工具，后端校验身份和参数。报名、预约或取消须由居民确认后执行。
 
 **[观看演示（13 分 32 秒）](https://leiqingliang.github.io/silverpilot/)** · [在线体验与账号](#在线体验) · [本地启动](#快速开始) · [系统架构](#系统架构) · [开发与验证](#开发与验证)
 
@@ -129,7 +129,7 @@ $app = 'http://127.0.0.1:8082'
 ### 复现检查
 
 - **已启动的 Docker 栈。** 在仓库根目录运行 `.\scripts\verify-running-stack.ps1`。它读取本机环境配置，检查四个服务的健康状态、同源代理和媒体资源，全部通过时输出 `[PASS] SilverPilot runtime verification completed successfully`。
-- **提交前工程检查。** 在完整 Git 工作目录中准备 JDK 25、Node.js 24、npm 12 和 Python 3.12，与 CI 对齐的精确版本见[运行时清单](runtime-versions.json)和 [CI 工作流](.github/workflows/ci.yml)。从仓库根目录执行：
+- **提交前工程检查。** 在完整 Git 工作目录中准备 JDK 25、Node.js 24.19.0、npm 12.0.2 和 Python 3.12，然后从仓库根目录运行下列命令。[运行时清单](runtime-versions.json) · [CI 工作流](.github/workflows/ci.yml)
 
 ```powershell
 Push-Location .\SourceCode\cecsmsui-vue
@@ -153,7 +153,7 @@ Pop-Location
 
 评测脚本默认直连后端 `127.0.0.1:8083`。例如后端改用 `18083` 时，在命令末尾追加 `-BaseUrl http://127.0.0.1:18083`。需要保存 JSON 报告可加 `-ReportPath .\.qa-artifacts\agent-eval.json`。
 
-2026-08-20 的 DeepSeek 历史报告为 **16/16**。用例覆盖工具选择、来源引用、待确认状态和预期拒绝。写操作用例创建待确认动作后取消，确认后的订单另按[预约验收步骤](#验证一笔上门服务预约)核对。[评测集与判定规则](evaluation/README.md) · [原始 JSON 报告](docs/agent-evaluation-live.json) · [整栈验证](docs/VALIDATION_REPORT.md)
+2026-08-20 的 DeepSeek 报告记录了 **16/16** 项工程契约通过，其中两条写操作用例到达待确认状态。当前评测脚本检查后会取消待办。要验证确认后是否生成订单，请按[预约验收步骤](#验证一笔上门服务预约)核对。[评测集与判定规则](evaluation/README.md) · [原始 JSON 报告](docs/agent-evaluation-live.json) · [整栈验证](docs/VALIDATION_REPORT.md)
 
 ### 常见问题
 
