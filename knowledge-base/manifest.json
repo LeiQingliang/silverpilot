@@ -1,9 +1,10 @@
 {
   "name": "SilverPilot ima-ready knowledge pack",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "owner": "qinglianglei",
-  "reviewedAt": "2026-08-18",
-  "maintenanceUpdatedAt": "2026-11-06",
+  "reviewedAt": "2026-11-26",
+  "maintenanceUpdatedAt": "2026-11-26",
+  "reviewScope": "Repository governance and seven software or demonstration documents. Professional health content and external ima synchronization remain pending.",
   "runtimePolicy": "Only status=approved documents with valid reviewed_at <= current Asia/Shanghai date <= next_review_at are indexed; draft and governance are excluded",
   "pendingReviews": [
     {
