@@ -7,6 +7,15 @@
     Not a scripted chatbot: the model plans, the application authorizes, and the user confirms.
   </p>
 </div>
+
+## 软件工程毕业设计论文
+
+《面向社区养老服务的可验证 AI Agent 平台设计与实现》以一次上门服务预约为例，说明模型怎样查询服务目录、居民怎样确认操作，以及如何核对最终订单。论文记录了作者使用多种 AI 编程工具独立开发 SilverPilot 的实践，并给出了知识检索对照实验、项目运行截图和社区服务站试点方案。
+
+**[阅读 PDF 定稿](docs/thesis/silverpilot-thesis.pdf)** · **[下载可编辑 Word 定稿](docs/thesis/silverpilot-thesis.docx?raw=true)**
+
+两种格式为同一版论文，共 56 页。第 7 章给出工程测试与 28 题检索实验的结果，第 8 章和附录 C 收录部署、接口联调与验收规程，附录 E 内嵌原始数据及复算脚本。论文对应的[源码快照为 `768674c3`](https://github.com/LeiQingliang/silverpilot/tree/768674c3f86eaae16983a35b60bae71fee8e2faa)。
+
 ## 求职作品与项目证据
 
 围绕 **技术理解、商业化能力与 AI 工具使用**，按 AI 产品运营、AI 产品经理、客户经理／AI 销售三类岗位整理项目能力、可核查证据与待验证事项。
@@ -50,6 +59,7 @@
 <p align="center"><sub>当前工作区 · 全 Docker 无缓存重建 · Microsoft Edge · 1440 × 1000 · 2026-08-21 02:02 CST</sub></p>
 
 <p align="center">
+  <a href="#软件工程毕业设计论文">毕业设计论文</a> ·
   <a href="#在线演示">在线演示</a> ·
   <a href="#按任务阅读">按任务阅读</a> ·
   <a href="#项目概览">项目概览</a> ·
